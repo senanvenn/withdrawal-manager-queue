@@ -1,6 +1,15 @@
-# Compiler files
+# Foundry
 cache/
 out/
+.gas-snapshot
+broadcast/
+output/
+coverage/
+report/
+lcov*
+
+# MacOS
+.DS_Store
 
 # Ignores development broadcast logs
 !/broadcast

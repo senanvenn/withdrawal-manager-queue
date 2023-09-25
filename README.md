@@ -1,66 +1,45 @@
-## Foundry
+# Withdrawal Manager Queue
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+![CI](https://github.com/maple-labs/withdrawal-manager-queue-private/actions/workflows/ci.yaml/badge.svg)
+[![GitBook - Documentation](https://img.shields.io/badge/GitBook-Documentation-orange?logo=gitbook&logoColor=white)](https://maplefinance.gitbook.io/maple/maple-for-developers/protocol-overview)
+[![Foundry][foundry-badge]][foundry]
+[![License: BUSL 1.1](https://img.shields.io/badge/License-BUSL%201.1-blue.svg)](https://github.com/maple-labs/withdrawal-manager-queue-private/blob/main/LICENSE)
 
-Foundry consists of:
+[foundry]: https://getfoundry.sh/
+[foundry-badge]: https://img.shields.io/badge/Built%20with-Foundry-FFDB1C.svg
 
--   **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
--   **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
--   **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
--   **Chisel**: Fast, utilitarian, and verbose solidity REPL.
+## Overview
 
-## Documentation
+This repository contains the contracts and modules of the Pool Permission Manager.
 
-https://book.getfoundry.sh/
+## Submodules
 
-## Usage
+Submodules imported:
 
-### Build
+Versions of dependencies can be checked with `git submodule status`.
 
-```shell
-$ forge build
+## Setup
+
+This project was built using [Foundry](https://book.getfoundry.sh/). Refer to installation instructions [here](https://github.com/foundry-rs/foundry#installation).
+
+```sh
+git clone git@github.com:maple-labs/withdrawal-manager-queue-private.git
+cd withdrawal-manager-queue-private
+forge install
 ```
 
-### Test
+## Audit Reports
 
-```shell
-$ forge test
-```
+## Bug Bounty
 
-### Format
+For all information related to the ongoing bug bounty for these contracts run by [Immunefi](https://immunefi.com/), please visit this [site](https://immunefi.com/bounty/maple/).
 
-```shell
-$ forge fmt
-```
+## About Maple
 
-### Gas Snapshots
+[Maple Finance](https://maple.finance/) is a decentralized corporate credit market. Maple provides capital to institutional borrowers through globally accessible fixed-income yield opportunities.
 
-```shell
-$ forge snapshot
-```
+---
 
-### Anvil
-
-```shell
-$ anvil
-```
-
-### Deploy
-
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
-```
-
-### Cast
-
-```shell
-$ cast <subcommand>
-```
-
-### Help
-
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
-```
+<p align="center">
+  <img src="https://user-images.githubusercontent.com/44272939/196706799-fe96d294-f700-41e7-a65f-2d754d0a6eac.gif" height="100" />
+</p>
