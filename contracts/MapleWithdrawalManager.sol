@@ -12,6 +12,7 @@ import { MapleWithdrawalManagerStorage } from "./MapleWithdrawalManagerStorage.s
 // TODO: Optimize storage loads of the struct.
 // TODO: Replace constructor with the usual proxy functions and initializer.
 // TODO: Add reentrancy checks.
+// TODO: Check for a better way to clear storage for mapping
 
 contract MapleWithdrawalManager is MapleWithdrawalManagerStorage {
 
@@ -60,13 +61,48 @@ contract MapleWithdrawalManager is MapleWithdrawalManagerStorage {
         require(ERC20Helper.transferFrom(pool, msg.sender, address(this), shares_), "WM:AS:FAILED_TRANSFER");
     }
 
+    function removeShares(uint256 shares_, address owner_) external onlyPoolManager returns (uint256 sharesReturned_) {
+        require(shares_ > 0,            "WM:RS:ZERO_SHARES");
+        require(requestIds[owner_] > 0, "WM:RS:NOT_IN_QUEUE");
+
+        uint128 requestId_ = requestIds[owner_];
+
+        uint256 currentShares_ = queue.requests[requestId_].shares;
+
+        require(shares_ <= currentShares_, "WM:RS:DECREASE_SHARES_ONLY");
+
+        uint256 sharesRemaining_ = currentShares_ - shares_;
+
+        totalShares -= shares_;
+
+        // If there are no shares remaining, cancel the withdrawal request.
+        if (sharesRemaining_ == 0) {
+            _cancelRequest(owner_, requestId_);
+        } else {
+            queue.requests[requestId_].shares = sharesRemaining_;
+        }
+
+        require(ERC20Helper.transfer(pool, owner_, shares_), "WM:RS:TRANSFER_FAIL");
+
+        sharesReturned_ = shares_;
+    }
+
     /**************************************************************************************************************************************/
     /*** View Functions                                                                                                                 ***/
     /**************************************************************************************************************************************/
 
-    function requests(uint128 requestID_) external view returns (address owner_, uint256 shares_) {
-        owner_  = queue.requests[requestID_].owner;
-        shares_ = queue.requests[requestID_].shares;
+    function requests(uint128 requestId_) external view returns (address owner_, uint256 shares_) {
+        owner_  = queue.requests[requestId_].owner;
+        shares_ = queue.requests[requestId_].shares;
+    }
+
+    /**************************************************************************************************************************************/
+    /*** Internal Functions                                                                                                             ***/
+    /**************************************************************************************************************************************/
+
+    function _cancelRequest(address owner_, uint128 requestId_) internal {
+        delete requestIds[owner_];
+        delete queue.requests[requestId_];
     }
 
 }
