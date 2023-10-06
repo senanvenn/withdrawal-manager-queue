@@ -6,7 +6,9 @@ import { MockERC20 } from "../../modules/erc20/contracts/test/mocks/MockERC20.so
 contract MockGlobals {
 
     address public governor;
+    address public operationalAdmin;
 
+    bool internal _isInstance;
     bool internal _isValidScheduledCall;
 
     bool public protocolPaused;
@@ -15,6 +17,18 @@ contract MockGlobals {
 
     constructor (address governor_) {
         governor = governor_;
+    }
+
+    function isInstanceOf(bytes32, address) external view returns (bool isInstance_) {
+        isInstance_ = _isInstance;
+    }
+
+    function __setIsInstanceOf(bool isInstance_) external {
+        _isInstance = isInstance_;
+    }
+
+    function __setOperationalAdmin(address operationalAdmin_) external {
+        operationalAdmin = operationalAdmin_;
     }
 
 }
@@ -47,6 +61,11 @@ contract MockPool is MockERC20 {
         asset_ = address(_asset);
     }
 
+    // TODO: Remove burn and spy on call parameters in tests.
+    function redeem(uint256 shares_, address receiver_, address owner_) external returns (uint256 assets_) {
+        _burn(owner_, shares_);
+    }
+
     function __setPoolManager(address poolManager_) external {
         manager = poolManager_;
     }
@@ -66,6 +85,10 @@ contract MockPoolManager {
         globals      = globals_;
         pool         = pool_;
         poolDelegate = poolDelegate_;
+    }
+
+    function __setTotalAssets(uint256 totalAssets_) external  {
+        totalAssets = totalAssets_;
     }
 
 }

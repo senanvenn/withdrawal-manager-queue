@@ -22,12 +22,16 @@ contract MapleWithdrawalManagerStorage {
     /*** State Variables                                                                                                                ***/
     /**************************************************************************************************************************************/
 
+    address public asset;
+    address public globals;
     address public pool;
     address public poolManager;
 
     uint256 public totalShares;  // Total amount of shares pending redemption.
 
     Queue public queue;
+
+    mapping(address => bool) public isManual;  // Defines which users use automated withdrawals (false by default).
 
     mapping(address => uint128) public requestIds;  // Maps users to their withdrawal requests identifiers.
 

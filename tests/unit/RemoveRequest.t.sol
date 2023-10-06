@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.7;
 
-import { MapleWithdrawalManagerTestBase } from "../MapleWithdrawalManager.t.sol";
+import { TestBase } from "../utils/TestBase.sol";
 
-contract RemoveRequestTests is MapleWithdrawalManagerTestBase {
+contract RemoveRequestTests is TestBase {
 
     function setUp() public override {
         super.setUp();
