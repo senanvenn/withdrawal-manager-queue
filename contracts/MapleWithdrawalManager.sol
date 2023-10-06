@@ -87,6 +87,20 @@ contract MapleWithdrawalManager is MapleWithdrawalManagerStorage {
         sharesReturned_ = shares_;
     }
 
+    function removeRequest(address owner_) external onlyPoolDelegate {
+        require(requestIds[owner_] > 0, "WM:RR:NOT_IN_QUEUE");
+
+        uint128 requestId_ = requestIds[owner_];
+
+        uint256 shares_ = queue.requests[requestId_].shares;
+
+        totalShares -= shares_;
+
+        _cancelRequest(owner_, requestId_);
+
+        require(ERC20Helper.transfer(pool, owner_, shares_), "WM:RR:TRANSFER_FAIL");
+    }
+
     /**************************************************************************************************************************************/
     /*** View Functions                                                                                                                 ***/
     /**************************************************************************************************************************************/
