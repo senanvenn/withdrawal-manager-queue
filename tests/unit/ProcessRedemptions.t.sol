@@ -192,3 +192,53 @@ contract ProcessRedemptionsTests is TestBase {
     }
 
 }
+
+contract ComplexRedemptionTests is TestBase {
+
+    function test_processRedemptions_complex() external {
+        uint256 totalAssets     = 100e18;
+        uint256 totalShares     = 250e18;
+        uint256 sharesToProcess = 200e18;
+
+        asset.mint(address(pool), totalShares);
+        pool.mint(wm, totalShares);
+
+        poolManager.__setTotalAssets(totalAssets);
+
+        withdrawalManager.__setRequest(1, address(0), 0);       // Already processed
+        withdrawalManager.__setRequest(2, address(2), 100e18);  // Fully processed
+        withdrawalManager.__setRequest(3, address(3), 50e18);   // Manual
+        withdrawalManager.__setRequest(4, address(0), 0);       // Cancelled
+        withdrawalManager.__setRequest(5, address(5), 75e18);   // Partially processed
+        withdrawalManager.__setRequest(6, address(6), 25e18);   // Out of shares
+
+        withdrawalManager.__setManualWithdrawal(address(3), true);
+        withdrawalManager.__setTotalShares(totalShares);
+        withdrawalManager.__setQueue(2, 6);
+
+        vm.prank(poolDelegate);
+        withdrawalManager.processRedemptions(sharesToProcess);
+
+        assertEq(pool.balanceOf(wm), 100e18);
+
+        assertEq(withdrawalManager.requestIds(address(2)), 0);
+        assertEq(withdrawalManager.requestIds(address(3)), 3);
+        assertEq(withdrawalManager.requestIds(address(4)), 0);
+        assertEq(withdrawalManager.requestIds(address(5)), 5);
+        assertEq(withdrawalManager.requestIds(address(6)), 6);
+
+        assertRequest({ requestId: 1, owner: address(0), shares: 0 });
+        assertRequest({ requestId: 2, owner: address(0), shares: 0 });
+        assertRequest({ requestId: 3, owner: address(3), shares: 50e18 });
+        assertRequest({ requestId: 4, owner: address(0), shares: 0 });
+        assertRequest({ requestId: 5, owner: address(5), shares: 25e18 });
+        assertRequest({ requestId: 6, owner: address(6), shares: 25e18 });
+
+        // Shares from the manual request are not redeemed.
+        assertEq(withdrawalManager.totalShares(), totalShares - sharesToProcess + 50e18);
+
+        // Request `5` is partially processed and becomes the next request.
+        assertQueue({ nextRequestId: 5, lastRequestId: 6 });
+    }
+
+}
