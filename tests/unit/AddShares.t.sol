@@ -12,7 +12,7 @@ contract AddSharesTests is TestBase {
         pool.mint(pm, 2);
 
         vm.prank(pm);
-        pool.approve(wm, 2);
+        pool.approve(address(withdrawalManager), 2);
     }
 
     function test_addShares_notPoolManager() external {

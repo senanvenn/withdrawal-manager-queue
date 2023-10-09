@@ -5,8 +5,6 @@ import { MapleWithdrawalManager } from "../../contracts/MapleWithdrawalManager.s
 
 contract MapleWithdrawalManagerHarness is MapleWithdrawalManager {
 
-    constructor(address pool_, address globals_) MapleWithdrawalManager(pool_, globals_) { }
-
     function __setManualWithdrawal(address owner_, bool isManual_) external {
         isManual[owner_] = isManual_;
     }

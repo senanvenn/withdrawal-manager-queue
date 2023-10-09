@@ -9,11 +9,32 @@ interface IERC20Like {
 
 interface IGlobalsLike {
 
+    function canDeploy(address caller_) external view returns (bool canDeploy_);
+
     function governor() external view returns (address governor_);
 
-    function isInstanceOf(bytes32 instanceKey_, address instance_) external view returns (bool isInstance_);
+    function isInstanceOf(bytes32 instanceId, address instance_) external view returns (bool isInstance_);
+
+    function isValidScheduledCall(
+        address caller_,
+        address contract_,
+        bytes32 functionId_,
+        bytes calldata callData_
+    ) external view returns (bool isValid_);
 
     function operationalAdmin() external view returns (address operationalAdmin_);
+
+    function securityAdmin() external view returns (address securityAdmin_);
+
+    function unscheduleCall(address caller_, bytes32 functionId_, bytes calldata callData_) external;
+
+}
+
+interface IMapleProxyFactoryLike {
+
+    function isInstance(address instance_) external view returns (bool isInstance_);
+
+    function mapleGlobals() external returns (address globals_);
 
 }
 
@@ -32,6 +53,8 @@ interface IPoolLike {
 }
 
 interface IPoolManagerLike {
+
+    function factory() external view returns (address factory_);
 
     function poolDelegate() external view returns (address poolDelegate_);
 

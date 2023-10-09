@@ -19,6 +19,8 @@ contract ProcessRedemptionsTests is TestBase {
     }
 
     function test_processRedemptions_notRedeemer() external {
+        globals.__setIsInstanceOf(false);
+
         vm.expectRevert("WM:NOT_REDEEMER");
         withdrawalManager.processRedemptions(sharesLocked);
     }

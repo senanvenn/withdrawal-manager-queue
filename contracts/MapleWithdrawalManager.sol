@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.7;
 
-import { ERC20Helper } from "../modules/erc20-helper/src/ERC20Helper.sol";
+import { ERC20Helper }           from "../modules/erc20-helper/src/ERC20Helper.sol";
+import { IMapleProxyFactory }    from "../modules/maple-proxy-factory/contracts/interfaces/IMapleProxyFactory.sol";
+import { MapleProxiedInternals } from "../modules/maple-proxy-factory/contracts/MapleProxiedInternals.sol";
 
 import {
     IERC20Like,
@@ -10,23 +12,22 @@ import {
     IPoolManagerLike
 } from "./interfaces/Interfaces.sol";
 
-import { MapleWithdrawalManagerStorage } from "./MapleWithdrawalManagerStorage.sol";
+import { MapleWithdrawalManagerStorage } from "./proxy/MapleWithdrawalManagerStorage.sol";
 
 // TODO: Add interface (with events).
 // TODO: Optimize struct if possible.
 // TODO: Optimize storage loads of the struct.
-// TODO: Replace constructor with the usual proxy functions and initializer.
 // TODO: Add reentrancy checks.
 // TODO: Check for a better way to clear storage for mapping
 
-contract MapleWithdrawalManager is MapleWithdrawalManagerStorage {
+contract MapleWithdrawalManager is MapleWithdrawalManagerStorage , MapleProxiedInternals {
 
     /**************************************************************************************************************************************/
     /*** Modifiers                                                                                                                      ***/
     /**************************************************************************************************************************************/
 
     modifier onlyRedeemer {
-        address globals_ = globals;
+        address globals_ = globals();
 
         require(
             msg.sender == IPoolManagerLike(poolManager).poolDelegate() ||
@@ -46,23 +47,38 @@ contract MapleWithdrawalManager is MapleWithdrawalManagerStorage {
     }
 
     modifier onlyPoolDelegate {
-        require(msg.sender == IPoolManagerLike(poolManager).poolDelegate(), "WM:NOT_PD");
-
+        require(msg.sender == poolDelegate(), "WM:NOT_PD");
         _;
     }
 
     /**************************************************************************************************************************************/
-    /*** Initialization                                                                                                                 ***/
+    /*** Proxy Functions                                                                                                                ***/
     /**************************************************************************************************************************************/
 
-    constructor(address pool_, address globals_) {
-        pool    = pool_;
-        globals = globals_;
+    function migrate(address migrator_, bytes calldata arguments_) external {
+        require(msg.sender == _factory(),        "WM:M:NOT_FACTORY");
+        require(_migrate(migrator_, arguments_), "WM:M:FAILED");
+    }
 
-        asset       = IPoolLike(pool_).asset();
-        poolManager = IPoolLike(pool_).manager();
+    function setImplementation(address implementation_) external {
+        require(msg.sender == _factory(), "WM:SI:NOT_FACTORY");
+        _setImplementation(implementation_);
+    }
 
-        queue.nextRequestId = 1;
+    function upgrade(uint256 version_, bytes calldata arguments_) external {
+        address poolDelegate_ = poolDelegate();
+
+        require(msg.sender == poolDelegate_ || msg.sender == securityAdmin(), "WM:U:NOT_AUTHORIZED");
+
+        IGlobalsLike mapleGlobals_ = IGlobalsLike(globals());
+
+        if (msg.sender == poolDelegate_) {
+            require(mapleGlobals_.isValidScheduledCall(msg.sender, address(this), "WM:UPGRADE", msg.data), "WM:U:INVALID_SCHED_CALL");
+
+            mapleGlobals_.unscheduleCall(msg.sender, "WM:UPGRADE", msg.data);
+        }
+
+        IMapleProxyFactory(_factory()).upgradeInstance(version_, arguments_);
     }
 
     /**************************************************************************************************************************************/
@@ -195,7 +211,7 @@ contract MapleWithdrawalManager is MapleWithdrawalManagerStorage {
 
         uint256 totalSupply_           = IPoolLike(pool).totalSupply();
         uint256 totalAssetsWithLosses_ = poolManager_.totalAssets() - poolManager_.unrealizedLosses();
-        uint256 availableLiquidity_    = IERC20Like(asset).balanceOf(pool);
+        uint256 availableLiquidity_    = IERC20Like(asset()).balanceOf(pool);
         uint256 requiredLiquidity_     = totalAssetsWithLosses_ * sharesToRedeem_ / totalSupply_;
 
         bool partialLiquidity_ = availableLiquidity_ < requiredLiquidity_;
@@ -287,6 +303,30 @@ contract MapleWithdrawalManager is MapleWithdrawalManagerStorage {
     /*** View Functions                                                                                                                 ***/
     /**************************************************************************************************************************************/
 
+    function asset() public view returns (address asset_) {
+        asset_ = IPoolLike(pool).asset();
+    }
+
+    function factory() external view returns (address factory_) {
+        factory_ = _factory();
+    }
+
+    function globals() public view returns (address globals_) {
+        globals_ = IMapleProxyFactory(_factory()).mapleGlobals();
+    }
+
+    function governor() public view returns (address governor_) {
+        governor_ = IGlobalsLike(globals()).governor();
+    }
+
+    function implementation() external view returns (address implementation_) {
+        implementation_ = _implementation();
+    }
+
+    function poolDelegate() public view returns (address poolDelegate_) {
+        poolDelegate_ = IPoolManagerLike(poolManager).poolDelegate();
+    }
+
     function previewRedeem(address owner_, uint256 shares_) public view returns (uint256 redeemableShares_, uint256 resultingAssets_) {
         uint128 requestId_ = requestIds[owner_];
 
@@ -307,9 +347,13 @@ contract MapleWithdrawalManager is MapleWithdrawalManagerStorage {
         ( redeemableShares_, resultingAssets_ ) = _calculateRedemption(shares_);
     }
 
-    function requests(uint128 requestId_) external view returns (address owner_, uint256 shares_) {
-        owner_  = queue.requests[requestId_].owner;
-        shares_ = queue.requests[requestId_].shares;
+    function requests(uint128 requestID_) external view returns (address owner_, uint256 shares_) {
+        owner_  = queue.requests[requestID_].owner;
+        shares_ = queue.requests[requestID_].shares;
+    }
+
+    function securityAdmin() public view returns (address securityAdmin_) {
+        securityAdmin_ = IGlobalsLike(globals()).securityAdmin();
     }
 
 }

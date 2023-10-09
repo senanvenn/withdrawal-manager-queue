@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity 0.8.7;
+pragma solidity ^0.8.7;
 
 contract MapleWithdrawalManagerStorage {
 
@@ -22,8 +22,6 @@ contract MapleWithdrawalManagerStorage {
     /*** State Variables                                                                                                                ***/
     /**************************************************************************************************************************************/
 
-    address public asset;
-    address public globals;
     address public pool;
     address public poolManager;
 
