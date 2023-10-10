@@ -3,6 +3,11 @@ pragma solidity ^0.8.7;
 
 interface IMapleWithdrawalManagerInitializer {
 
-    event Initialized(address pool_, address poolManager_);
+    /**
+     *  @dev               Emitted when the withdrawal manager proxy contract is initialized.
+     *  @param pool        Address of the pool contract.
+     *  @param poolManager Address of the pool manager contract.
+     */
+    event Initialized(address pool, address poolManager);
 
 }

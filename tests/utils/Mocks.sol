@@ -7,7 +7,7 @@ contract MockFactory {
 
     bool _isInstance;
 
-    function isInstance(address) external returns (bool isInstance_) {
+    function isInstance(address) external view returns (bool isInstance_) {
         isInstance_ = _isInstance;
     }
 
@@ -98,7 +98,9 @@ contract MockPool is MockERC20 {
     }
 
     // TODO: Remove burn and spy on call parameters in tests.
-    function redeem(uint256 shares_, address receiver_, address owner_) external returns (uint256 assets_) {
+    function redeem(uint256 shares_, address, address owner_) external returns (uint256 assets_) {
+        assets_;  // Ignore variable
+
         _burn(owner_, shares_);
     }
 

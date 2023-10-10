@@ -5,6 +5,8 @@ import { ERC20Helper }           from "../modules/erc20-helper/src/ERC20Helper.s
 import { IMapleProxyFactory }    from "../modules/maple-proxy-factory/contracts/interfaces/IMapleProxyFactory.sol";
 import { MapleProxiedInternals } from "../modules/maple-proxy-factory/contracts/MapleProxiedInternals.sol";
 
+import { IMapleWithdrawalManager } from "./interfaces/IMapleWithdrawalManager.sol";
+
 import {
     IERC20Like,
     IGlobalsLike,
@@ -20,7 +22,7 @@ import { MapleWithdrawalManagerStorage } from "./proxy/MapleWithdrawalManagerSto
 // TODO: Add reentrancy checks.
 // TODO: Check for a better way to clear storage for mapping
 
-contract MapleWithdrawalManager is MapleWithdrawalManagerStorage , MapleProxiedInternals {
+contract MapleWithdrawalManager is IMapleWithdrawalManager, MapleWithdrawalManagerStorage , MapleProxiedInternals {
 
     /**************************************************************************************************************************************/
     /*** Modifiers                                                                                                                      ***/
@@ -85,7 +87,7 @@ contract MapleWithdrawalManager is MapleWithdrawalManagerStorage , MapleProxiedI
     /*** State-Changing Functions                                                                                                       ***/
     /**************************************************************************************************************************************/
 
-    function addShares(uint256 shares_, address owner_) external onlyPoolManager {
+    function addShares(uint256 shares_, address owner_) external override onlyPoolManager {
         require(shares_ > 0,             "WM:AS:ZERO_SHARES");
         require(requestIds[owner_] == 0, "WM:AS:IN_QUEUE");
 
@@ -105,7 +107,7 @@ contract MapleWithdrawalManager is MapleWithdrawalManagerStorage , MapleProxiedI
         uint256 shares_,
         address owner_
     )
-        external onlyPoolManager returns (
+        external override onlyPoolManager returns (
             uint256 redeemableShares_,
             uint256 resultingAssets_
         )
@@ -115,7 +117,7 @@ contract MapleWithdrawalManager is MapleWithdrawalManagerStorage , MapleProxiedI
             : _processManualExit(shares_, owner_);
     }
 
-    function processRedemptions(uint256 sharesToProcess_) external onlyRedeemer {
+    function processRedemptions(uint256 sharesToProcess_) external override onlyRedeemer {
         require(sharesToProcess_ > 0, "WM:PR:ZERO_SHARES");
 
         ( uint256 redeemableShares_, ) = _calculateRedemption(sharesToProcess_);
@@ -147,7 +149,7 @@ contract MapleWithdrawalManager is MapleWithdrawalManagerStorage , MapleProxiedI
         queue.nextRequestId = nextRequestId_;
     }
 
-    function removeShares(uint256 shares_, address owner_) external onlyPoolManager returns (uint256 sharesReturned_) {
+    function removeShares(uint256 shares_, address owner_) external override onlyPoolManager returns (uint256 sharesReturned_) {
         require(shares_ > 0,            "WM:RS:ZERO_SHARES");
         require(requestIds[owner_] > 0, "WM:RS:NOT_IN_QUEUE");
 
@@ -173,7 +175,7 @@ contract MapleWithdrawalManager is MapleWithdrawalManagerStorage , MapleProxiedI
         sharesReturned_ = shares_;
     }
 
-    function removeRequest(address owner_) external onlyPoolDelegate {
+    function removeRequest(address owner_) external override onlyPoolDelegate {
         require(requestIds[owner_] > 0, "WM:RR:NOT_IN_QUEUE");
 
         uint128 requestId_ = requestIds[owner_];
@@ -187,7 +189,7 @@ contract MapleWithdrawalManager is MapleWithdrawalManagerStorage , MapleProxiedI
         require(ERC20Helper.transfer(pool, owner_, shares_), "WM:RR:TRANSFER_FAIL");
     }
 
-    function setManualWithdrawal(address owner_, bool isManual_) external onlyPoolDelegate {
+    function setManualWithdrawal(address owner_, bool isManual_) external override onlyPoolDelegate {
         uint128 requestId_ = requestIds[owner_];
 
         // TODO: Check if this is required.
@@ -303,31 +305,39 @@ contract MapleWithdrawalManager is MapleWithdrawalManagerStorage , MapleProxiedI
     /*** View Functions                                                                                                                 ***/
     /**************************************************************************************************************************************/
 
-    function asset() public view returns (address asset_) {
+    function asset() public view override returns (address asset_) {
         asset_ = IPoolLike(pool).asset();
     }
 
-    function factory() external view returns (address factory_) {
+    function factory() external view override returns (address factory_) {
         factory_ = _factory();
     }
 
-    function globals() public view returns (address globals_) {
+    function globals() public view override returns (address globals_) {
         globals_ = IMapleProxyFactory(_factory()).mapleGlobals();
     }
 
-    function governor() public view returns (address governor_) {
+    function governor() public view override returns (address governor_) {
         governor_ = IGlobalsLike(globals()).governor();
     }
 
-    function implementation() external view returns (address implementation_) {
+    function implementation() external view override returns (address implementation_) {
         implementation_ = _implementation();
     }
 
-    function poolDelegate() public view returns (address poolDelegate_) {
+    function poolDelegate() public view override returns (address poolDelegate_) {
         poolDelegate_ = IPoolManagerLike(poolManager).poolDelegate();
     }
 
-    function previewRedeem(address owner_, uint256 shares_) public view returns (uint256 redeemableShares_, uint256 resultingAssets_) {
+    function previewRedeem(
+        address owner_,
+        uint256 shares_
+    )
+        public view override returns (
+            uint256 redeemableShares_,
+            uint256 resultingAssets_
+        )
+    {
         uint128 requestId_ = requestIds[owner_];
 
         // Only manual users can call redeem.
@@ -347,12 +357,12 @@ contract MapleWithdrawalManager is MapleWithdrawalManagerStorage , MapleProxiedI
         ( redeemableShares_, resultingAssets_ ) = _calculateRedemption(shares_);
     }
 
-    function requests(uint128 requestID_) external view returns (address owner_, uint256 shares_) {
-        owner_  = queue.requests[requestID_].owner;
-        shares_ = queue.requests[requestID_].shares;
+    function requests(uint128 requestId_) external view override returns (address owner_, uint256 shares_) {
+        owner_  = queue.requests[requestId_].owner;
+        shares_ = queue.requests[requestId_].shares;
     }
 
-    function securityAdmin() public view returns (address securityAdmin_) {
+    function securityAdmin() public view override returns (address securityAdmin_) {
         securityAdmin_ = IGlobalsLike(globals()).securityAdmin();
     }
 

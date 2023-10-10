@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.7;
 
-contract MapleWithdrawalManagerStorage {
+import { IMapleWithdrawalManagerStorage } from "../interfaces/IMapleWithdrawalManagerStorage.sol";
+
+contract MapleWithdrawalManagerStorage is IMapleWithdrawalManagerStorage {
 
     /**************************************************************************************************************************************/
     /*** Structs                                                                                                                        ***/
@@ -22,15 +24,15 @@ contract MapleWithdrawalManagerStorage {
     /*** State Variables                                                                                                                ***/
     /**************************************************************************************************************************************/
 
-    address public pool;
-    address public poolManager;
+    address public override pool;
+    address public override poolManager;
 
-    uint256 public totalShares;  // Total amount of shares pending redemption.
+    uint256 public override totalShares;  // Total amount of shares pending redemption.
 
-    Queue public queue;
+    Queue public override queue;
 
-    mapping(address => bool) public isManual;  // Defines which users use automated withdrawals (false by default).
+    mapping(address => bool) public override isManual;  // Defines which users use automated withdrawals (false by default).
 
-    mapping(address => uint128) public requestIds;  // Maps users to their withdrawal requests identifiers.
+    mapping(address => uint128) public override requestIds;  // Maps users to their withdrawal requests identifiers.
 
 }
