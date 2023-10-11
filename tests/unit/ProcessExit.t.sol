@@ -5,6 +5,10 @@ import { TestBase } from "../utils/TestBase.sol";
 
 contract ProcessExitTests is TestBase {
 
+    event RequestCancelled(uint128 indexed requestId);
+    event RequestProcessed(uint128 indexed requestId, uint256 shares, uint256 assets);
+    event RequestUpdated(uint128 indexed requestId, uint256 shares);
+
     uint256 assetsDeposited = 100e18;
     uint256 sharesToRedeem  = 250e18;
 
@@ -68,6 +72,12 @@ contract ProcessExitTests is TestBase {
         assertEq(pool.balanceOf(lp), 0);
         assertEq(pool.balanceOf(wm), sharesToRedeem);
 
+        vm.expectEmit();
+        emit RequestProcessed(1, sharesToRedeem, assetsDeposited);
+
+        vm.expectEmit();
+        emit RequestCancelled(1);
+
         vm.prank(pm);
         withdrawalManager.processExit(sharesToRedeem, lp);
 
@@ -92,6 +102,12 @@ contract ProcessExitTests is TestBase {
 
         assertEq(pool.balanceOf(lp), 0);
         assertEq(pool.balanceOf(wm), sharesToRedeem);
+
+        vm.expectEmit();
+        emit RequestProcessed(1, sharesToRedeem / 2, assetsDeposited / 2);
+
+        vm.expectEmit();
+        emit RequestUpdated(1, sharesToRedeem / 2);
 
         vm.prank(pm);
         withdrawalManager.processExit(sharesToRedeem, lp);

@@ -4,6 +4,46 @@ pragma solidity ^0.8.7;
 interface IMapleWithdrawalManager {
 
     /**************************************************************************************************************************************/
+    /*** Events                                                                                                                         ***/
+    /**************************************************************************************************************************************/
+
+    /**
+     *  @dev   Emitted when a withdrawal request is cancelled.
+     *  @param requestId Identifier of the withdrawal request.
+     */
+    event RequestCancelled(uint128 indexed requestId);
+
+    /**
+     *  @dev   Emitted when a withdrawal request is created.
+     *  @param requestId Identifier of the withdrawal request.
+     *  @param owner     Address of the owner of the shares.
+     *  @param shares    Amount of shares requested for redemption.
+     */
+    event RequestCreated(uint128 indexed requestId, address owner, uint256 shares);
+
+    /**
+     *  @dev   Emitted when a withdrawal request is processed.
+     *  @param requestId Identifier of the withdrawal request.
+     *  @param shares    Amount of redeemable shares.
+     *  @param assets    Amount of withdrawable assets.
+     */
+    event RequestProcessed(uint128 indexed requestId, uint256 shares, uint256 assets);
+
+    /**
+     *  @dev   Emitted when a withdrawal request is updated.
+     *  @param requestId Identifier of the withdrawal request.
+     *  @param shares    Amount of remaining shares pending redemption.
+     */
+    event RequestUpdated(uint128 indexed requestId, uint256 shares);
+
+    /**
+     *  @dev   Emitted when the withdrawal type of an account is updated.
+     *  @param account  Address of the account.
+     *  @param isManual `true` if the withdrawal is manual, `false` if it is automatic.
+     */
+    event ManualWithdrawalSet(address indexed account, bool isManual);
+
+    /**************************************************************************************************************************************/
     /*** State-Changing Functions                                                                                                       ***/
     /**************************************************************************************************************************************/
 

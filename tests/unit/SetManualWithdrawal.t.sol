@@ -5,6 +5,8 @@ import { TestBase } from "../utils/TestBase.sol";
 
 contract SetManualWithdrawalTests is TestBase {
 
+    event ManualWithdrawalSet(address indexed account, bool isManual);
+
     function test_setManualWithdrawal_notPoolDelegate() external {
         vm.expectRevert("WM:NOT_PD");
         withdrawalManager.setManualWithdrawal(lp, true);
@@ -20,6 +22,9 @@ contract SetManualWithdrawalTests is TestBase {
 
     function test_setManualWithdrawal_success() external {
         assertEq(withdrawalManager.isManual(lp), false);
+
+        vm.expectEmit();
+        emit ManualWithdrawalSet(lp, true);
 
         vm.prank(poolDelegate);
         withdrawalManager.setManualWithdrawal(lp, true);

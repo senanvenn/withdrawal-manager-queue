@@ -5,6 +5,10 @@ import { TestBase } from "../utils/TestBase.sol";
 
 contract ProcessRedemptionsTests is TestBase {
 
+    event RequestCancelled(uint128 indexed requestId);
+    event RequestProcessed(uint128 indexed requestId, uint256 shares, uint256 assets);
+    event RequestUpdated(uint128 indexed requestId, uint256 shares);
+
     uint256 assetsDeposited = 100e18;
     uint256 sharesLocked    = 250e18;
 
@@ -49,8 +53,6 @@ contract ProcessRedemptionsTests is TestBase {
         vm.prank(poolDelegate);
         withdrawalManager.processRedemptions(sharesLocked);
 
-        assertEq(pool.balanceOf(wm), sharesLocked);
-
         assertQueue({ nextRequestId: 1, lastRequestId: 0 });
     }
 
@@ -58,16 +60,12 @@ contract ProcessRedemptionsTests is TestBase {
         vm.prank(governor);
         withdrawalManager.processRedemptions(sharesLocked);
 
-        assertEq(pool.balanceOf(wm), sharesLocked);
-
         assertQueue({ nextRequestId: 1, lastRequestId: 0 });
     }
 
     function test_processRedemptions_operationalAdmin() external {
         vm.prank(operationalAdmin);
         withdrawalManager.processRedemptions(sharesLocked);
-
-        assertEq(pool.balanceOf(wm), sharesLocked);
 
         assertQueue({ nextRequestId: 1, lastRequestId: 0 });
     }
@@ -77,8 +75,6 @@ contract ProcessRedemptionsTests is TestBase {
 
         vm.prank(redeemer);
         withdrawalManager.processRedemptions(sharesLocked);
-
-        assertEq(pool.balanceOf(wm), sharesLocked);
 
         assertQueue({ nextRequestId: 1, lastRequestId: 0 });
     }
@@ -90,9 +86,6 @@ contract ProcessRedemptionsTests is TestBase {
 
         vm.prank(poolDelegate);
         withdrawalManager.processRedemptions(sharesLocked);
-
-        assertEq(pool.balanceOf(lp), 0);
-        assertEq(pool.balanceOf(wm), sharesLocked);
 
         assertEq(withdrawalManager.totalShares(), sharesLocked);
 
@@ -114,9 +107,6 @@ contract ProcessRedemptionsTests is TestBase {
         vm.prank(poolDelegate);
         withdrawalManager.processRedemptions(sharesLocked / 2);
 
-        assertEq(pool.balanceOf(lp), 0);
-        assertEq(pool.balanceOf(wm), sharesLocked);
-
         assertEq(withdrawalManager.totalShares(), sharesLocked);
 
         assertEq(withdrawalManager.requestIds(lp), 1);
@@ -130,11 +120,14 @@ contract ProcessRedemptionsTests is TestBase {
         withdrawalManager.__setRequest(1, lp, sharesLocked);
         withdrawalManager.__setQueue(1, 1);
 
+        vm.expectEmit();
+        emit RequestProcessed(1, sharesLocked, assetsDeposited);
+
+        vm.expectEmit();
+        emit RequestCancelled(1);
+
         vm.prank(poolDelegate);
         withdrawalManager.processRedemptions(sharesLocked);
-
-        assertEq(pool.balanceOf(lp), 0);
-        assertEq(pool.balanceOf(wm), 0);
 
         assertEq(withdrawalManager.totalShares(), 0);
 
@@ -152,11 +145,14 @@ contract ProcessRedemptionsTests is TestBase {
         // Only half of the liquidity is available.
         asset.burn(address(pool), assetsDeposited / 2);
 
+        vm.expectEmit();
+        emit RequestProcessed(1, sharesLocked / 2, assetsDeposited / 2);
+
+        vm.expectEmit();
+        emit RequestUpdated(1, sharesLocked / 2);
+
         vm.prank(poolDelegate);
         withdrawalManager.processRedemptions(sharesLocked / 2);
-
-        assertEq(pool.balanceOf(lp), 0);
-        assertEq(pool.balanceOf(wm), sharesLocked / 2);
 
         assertEq(withdrawalManager.totalShares(), sharesLocked / 2);
 
@@ -175,12 +171,20 @@ contract ProcessRedemptionsTests is TestBase {
         withdrawalManager.__setRequest(2, lp2, 150e18);
         withdrawalManager.__setQueue(1, 2);
 
+        vm.expectEmit();
+        emit RequestProcessed(1, 100e18, 40e18);
+
+        vm.expectEmit();
+        emit RequestCancelled(1);
+
+        vm.expectEmit();
+        emit RequestProcessed(2, 150e18, 60e18);
+
+        vm.expectEmit();
+        emit RequestCancelled(2);
+
         vm.prank(poolDelegate);
         withdrawalManager.processRedemptions(sharesLocked);
-
-        assertEq(pool.balanceOf(wm),  0);
-        assertEq(pool.balanceOf(lp1), 0);
-        assertEq(pool.balanceOf(lp2), 0);
 
         assertEq(withdrawalManager.totalShares(), 0);
 
@@ -196,6 +200,10 @@ contract ProcessRedemptionsTests is TestBase {
 }
 
 contract ComplexRedemptionTests is TestBase {
+
+    event RequestCancelled(uint128 indexed requestId);
+    event RequestUpdated(uint128 indexed requestId, uint256 shares);
+    event RequestProcessed(uint128 indexed requestId, uint256 shares, uint256 assets);
 
     function test_processRedemptions_complex() external {
         uint256 totalAssets     = 100e18;
@@ -218,10 +226,20 @@ contract ComplexRedemptionTests is TestBase {
         withdrawalManager.__setTotalShares(totalShares);
         withdrawalManager.__setQueue(2, 6);
 
+        vm.expectEmit();
+        emit RequestProcessed(2, 100e18, 40e18);
+
+        vm.expectEmit();
+        emit RequestCancelled(2);
+
+        vm.expectEmit();
+        emit RequestProcessed(5, 50e18, 20e18);
+
+        vm.expectEmit();
+        emit RequestUpdated(5, 25e18);
+
         vm.prank(poolDelegate);
         withdrawalManager.processRedemptions(sharesToProcess);
-
-        assertEq(pool.balanceOf(wm), 100e18);
 
         assertEq(withdrawalManager.requestIds(address(2)), 0);
         assertEq(withdrawalManager.requestIds(address(3)), 3);

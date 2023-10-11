@@ -5,6 +5,8 @@ import { TestBase } from "../utils/TestBase.sol";
 
 contract AddSharesTests is TestBase {
 
+    event RequestCreated(uint128 indexed requestId, address owner, uint256 shares);
+
     function setUp() public override {
         super.setUp();
 
@@ -46,6 +48,9 @@ contract AddSharesTests is TestBase {
 
         assertEq(lastRequestId, 0);
 
+        vm.expectEmit();
+        emit RequestCreated(1, lp, 1);
+
         vm.prank(pm);
         withdrawalManager.addShares(1, lp);
 
@@ -55,6 +60,9 @@ contract AddSharesTests is TestBase {
     }
 
     function test_addShares_success() external {
+        vm.expectEmit();
+        emit RequestCreated(1, lp, 1);
+
         vm.prank(pm);
         withdrawalManager.addShares(1, lp);
 
@@ -69,6 +77,9 @@ contract AddSharesTests is TestBase {
         assertEq(withdrawalManager.requestIds(owner_), lastRequestId);
 
         address lp2 = makeAddr("lp2");
+
+        vm.expectEmit();
+        emit RequestCreated(2, lp2, 1);
 
         vm.prank(pm);
         withdrawalManager.addShares(1, lp2);

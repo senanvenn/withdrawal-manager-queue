@@ -101,6 +101,8 @@ contract MapleWithdrawalManager is IMapleWithdrawalManager, MapleWithdrawalManag
         totalShares += shares_;
 
         require(ERC20Helper.transferFrom(pool, msg.sender, address(this), shares_), "WM:AS:FAILED_TRANSFER");
+
+        emit RequestCreated(lastRequestId_, owner_, shares_);
     }
 
     function processExit(
@@ -168,6 +170,8 @@ contract MapleWithdrawalManager is IMapleWithdrawalManager, MapleWithdrawalManag
             _cancelRequest(owner_, requestId_);
         } else {
             queue.requests[requestId_].shares = sharesRemaining_;
+
+            emit RequestUpdated(requestId_, sharesRemaining_);
         }
 
         require(ERC20Helper.transfer(pool, owner_, shares_), "WM:RS:TRANSFER_FAIL");
@@ -196,6 +200,8 @@ contract MapleWithdrawalManager is IMapleWithdrawalManager, MapleWithdrawalManag
         require(requestId_ == 0, "WM:SMW:IN_QUEUE");
 
         isManual[owner_] = isManual_;
+
+        emit ManualWithdrawalSet(owner_, isManual_);
     }
 
     /**************************************************************************************************************************************/
@@ -205,6 +211,8 @@ contract MapleWithdrawalManager is IMapleWithdrawalManager, MapleWithdrawalManag
     function _cancelRequest(address owner_, uint128 requestId_) internal {
         delete requestIds[owner_];
         delete queue.requests[requestId_];
+
+        emit RequestCancelled(requestId_);
     }
 
     // TODO: Add fuzz tests to check the ER calculation.
@@ -232,8 +240,9 @@ contract MapleWithdrawalManager is IMapleWithdrawalManager, MapleWithdrawalManag
 
         // Cancel the request if all shares have been redeemed.
         if (remainingShares_ == 0) {
-            delete requestIds[owner_];
-            delete queue.requests[requestId_];
+            _cancelRequest(owner_, requestId_);
+        } else {
+            emit RequestUpdated(requestId_, remainingShares_);
         }
     }
 
@@ -266,6 +275,8 @@ contract MapleWithdrawalManager is IMapleWithdrawalManager, MapleWithdrawalManag
 
         ( redeemableShares_, resultingAssets_ ) = _calculateRedemption(shares_);
 
+        emit RequestProcessed(requestId_, redeemableShares_, resultingAssets_);
+
         _decreaseRequest(requestId_, owner_, redeemableShares_);
 
         require(ERC20Helper.transfer(pool, owner_, redeemableShares_), "WM:PE:TRANSFER_FAIL");
@@ -290,11 +301,15 @@ contract MapleWithdrawalManager is IMapleWithdrawalManager, MapleWithdrawalManag
         uint256 sharesToProcess_ = _min(request_.shares, maximumSharesToProcess_);
 
         // Calculate how many shares can actually be redeemed.
-        ( processedShares_, ) = _calculateRedemption(sharesToProcess_);
+        uint256 resultingAssets_;
+
+        ( processedShares_, resultingAssets_ ) = _calculateRedemption(sharesToProcess_);
 
         isProcessed_ = processedShares_ == request_.shares;
 
         if (!isManual[request_.owner]) {
+            emit RequestProcessed(requestId_, processedShares_, resultingAssets_);
+
             _decreaseRequest(requestId_, request_.owner, processedShares_);
 
             IPoolLike(pool).redeem(processedShares_, request_.owner, address(this));

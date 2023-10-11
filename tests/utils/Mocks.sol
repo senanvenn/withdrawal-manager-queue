@@ -97,11 +97,8 @@ contract MockPool is MockERC20 {
         asset_ = address(_asset);
     }
 
-    // TODO: Remove burn and spy on call parameters in tests.
-    function redeem(uint256 shares_, address, address owner_) external returns (uint256 assets_) {
+    function redeem(uint256, address, address) external returns (uint256 assets_) {
         assets_;  // Ignore variable
-
-        _burn(owner_, shares_);
     }
 
     function __setPoolManager(address poolManager_) external {
