@@ -17,25 +17,15 @@ contract PreviewRedeemTests is TestBase {
         poolManager.__setTotalAssets(assetsDeposited);
     }
 
-    function test_previewRedeem_notManual() external {
-        ( uint256 redeemableShares_, uint256 resultingAssets_ ) = withdrawalManager.previewRedeem(lp, sharesToRedeem);
+    function test_previewRedeem_tooManyShares() external {
+        withdrawalManager.__setManualSharesAvailable(lp, sharesToRedeem);
 
-        assertEq(redeemableShares_, 0);
-        assertEq(resultingAssets_,  0);
-    }
-
-    function test_previewRedeem_noRequest() external {
-        withdrawalManager.__setManualWithdrawal(lp, true);
-
-        ( uint256 redeemableShares_, uint256 resultingAssets_ ) = withdrawalManager.previewRedeem(lp, sharesToRedeem);
-
-        assertEq(redeemableShares_, 0);
-        assertEq(resultingAssets_,  0);
+        vm.expectRevert("WM:PR:TOO_MANY_SHARES");
+        withdrawalManager.previewRedeem(lp, sharesToRedeem + 1);
     }
 
     function test_previewRedeem_notProcessed() external {
-        withdrawalManager.__setManualWithdrawal(lp, true);
-        withdrawalManager.__setRequest(1, lp, sharesToRedeem);
+        withdrawalManager.__setManualSharesAvailable(lp, 0);
 
         ( uint256 redeemableShares_, uint256 resultingAssets_ ) = withdrawalManager.previewRedeem(lp, sharesToRedeem);
 
@@ -44,9 +34,7 @@ contract PreviewRedeemTests is TestBase {
     }
 
     function test_previewRedeem_complete() external {
-        withdrawalManager.__setManualWithdrawal(lp, true);
-        withdrawalManager.__setRequest(1, lp, sharesToRedeem);
-        withdrawalManager.__setQueue(2, 1);
+        withdrawalManager.__setManualSharesAvailable(lp, sharesToRedeem);
 
         ( uint256 redeemableShares_, uint256 resultingAssets_ ) = withdrawalManager.previewRedeem(lp, sharesToRedeem);
 
@@ -55,9 +43,7 @@ contract PreviewRedeemTests is TestBase {
     }
 
     function test_previewRedeem_partial() external {
-        withdrawalManager.__setManualWithdrawal(lp, true);
-        withdrawalManager.__setRequest(1, lp, sharesToRedeem);
-        withdrawalManager.__setQueue(2, 1);
+        withdrawalManager.__setManualSharesAvailable(lp, sharesToRedeem);
 
         // Only half of the liquidity is available.
         asset.burn(address(pool), assetsDeposited / 2);

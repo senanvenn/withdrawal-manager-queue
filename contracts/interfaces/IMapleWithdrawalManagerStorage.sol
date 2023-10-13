@@ -26,7 +26,14 @@ interface IMapleWithdrawalManagerStorage {
      *  @param  account  Address of the account.
      *  @return isManual `true` if the account withdraws manually, `false` if not.
      */
-    function isManual(address account) external view returns (bool isManual);
+    function isManualWithdrawal(address account) external view returns (bool isManual);
+
+    /**
+     *  @dev    Returns the amount of shares available for manual withdrawal.
+     *  @param  owner           The address of the owner of shares.
+     *  @return sharesAvailable Amount of shares available for manual withdrawal.
+     */
+    function manualSharesAvailable(address owner) external view returns (uint256 sharesAvailable);
 
     /**
      *  @dev    Returns the request identifier of an account.

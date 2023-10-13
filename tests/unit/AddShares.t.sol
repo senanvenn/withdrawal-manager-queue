@@ -59,6 +59,24 @@ contract AddSharesTests is TestBase {
         assertEq(lastRequestId, 1);
     }
 
+    function test_addShares_newRequestAddedToQueue_manual() external {
+        withdrawalManager.__setManualWithdrawal(lp, true);
+
+        ( , uint128 lastRequestId ) = withdrawalManager.queue();
+
+        assertEq(lastRequestId, 0);
+
+        vm.expectEmit();
+        emit RequestCreated(1, lp, 1);
+
+        vm.prank(pm);
+        withdrawalManager.addShares(1, lp);
+
+        ( , lastRequestId ) = withdrawalManager.queue();
+
+        assertEq(lastRequestId, 1);
+    }
+
     function test_addShares_success() external {
         vm.expectEmit();
         emit RequestCreated(1, lp, 1);

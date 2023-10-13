@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.7;
 
-import { Test }      from "../../modules/forge-std/src/Test.sol";
-import { MockERC20 } from "../../modules/erc20/contracts/test/mocks/MockERC20.sol";
+import { console2 as console, Test } from "../../modules/forge-std/src/Test.sol";
+import { MockERC20 }                 from "../../modules/erc20/contracts/test/mocks/MockERC20.sol";
 
 import { MapleWithdrawalManagerFactory }     from "../../contracts/proxy/MapleWithdrawalManagerFactory.sol";
 import { MapleWithdrawalManagerInitializer } from "../../contracts/proxy/MapleWithdrawalManagerInitializer.sol";
@@ -12,12 +12,12 @@ import { MockFactory, MockGlobals, MockPool, MockPoolManager } from "./Mocks.sol
 
 contract TestBase is Test {
 
-    address internal governor           = makeAddr("governor");
-    address internal lp                 = makeAddr("lp");
-    address internal operationalAdmin   = makeAddr("operationalAdmin");
-    address internal poolDelegate       = makeAddr("poolDelegate");
-    address internal redeemer           = makeAddr("redeemer");
-    address internal securityAdmin      = makeAddr("securityAdmin");
+    address internal governor         = makeAddr("governor");
+    address internal lp               = makeAddr("lp");
+    address internal operationalAdmin = makeAddr("operationalAdmin");
+    address internal poolDelegate     = makeAddr("poolDelegate");
+    address internal redeemer         = makeAddr("redeemer");
+    address internal securityAdmin    = makeAddr("securityAdmin");
 
     address internal implementation;
     address internal initializer;

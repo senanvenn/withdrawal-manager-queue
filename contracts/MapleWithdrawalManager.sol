@@ -16,11 +16,9 @@ import {
 
 import { MapleWithdrawalManagerStorage } from "./proxy/MapleWithdrawalManagerStorage.sol";
 
-// TODO: Add interface (with events).
 // TODO: Optimize struct if possible.
 // TODO: Optimize storage loads of the struct.
 // TODO: Add reentrancy checks.
-// TODO: Check for a better way to clear storage for mapping
 
 contract MapleWithdrawalManager is IMapleWithdrawalManager, MapleWithdrawalManagerStorage , MapleProxiedInternals {
 
@@ -167,11 +165,11 @@ contract MapleWithdrawalManager is IMapleWithdrawalManager, MapleWithdrawalManag
 
         // If there are no shares remaining, cancel the withdrawal request.
         if (sharesRemaining_ == 0) {
-            _cancelRequest(owner_, requestId_);
+            _removeRequest(owner_, requestId_);
         } else {
             queue.requests[requestId_].shares = sharesRemaining_;
 
-            emit RequestUpdated(requestId_, sharesRemaining_);
+            emit RequestDecreased(requestId_, shares_);
         }
 
         require(ERC20Helper.transfer(pool, owner_, shares_), "WM:RS:TRANSFER_FAIL");
@@ -188,7 +186,7 @@ contract MapleWithdrawalManager is IMapleWithdrawalManager, MapleWithdrawalManag
 
         totalShares -= shares_;
 
-        _cancelRequest(owner_, requestId_);
+        _removeRequest(owner_, requestId_);
 
         require(ERC20Helper.transfer(pool, owner_, shares_), "WM:RR:TRANSFER_FAIL");
     }
@@ -199,7 +197,7 @@ contract MapleWithdrawalManager is IMapleWithdrawalManager, MapleWithdrawalManag
         // TODO: Check if this is required.
         require(requestId_ == 0, "WM:SMW:IN_QUEUE");
 
-        isManual[owner_] = isManual_;
+        isManualWithdrawal[owner_] = isManual_;
 
         emit ManualWithdrawalSet(owner_, isManual_);
     }
@@ -207,13 +205,6 @@ contract MapleWithdrawalManager is IMapleWithdrawalManager, MapleWithdrawalManag
     /**************************************************************************************************************************************/
     /*** Internal Functions                                                                                                             ***/
     /**************************************************************************************************************************************/
-
-    function _cancelRequest(address owner_, uint128 requestId_) internal {
-        delete requestIds[owner_];
-        delete queue.requests[requestId_];
-
-        emit RequestCancelled(requestId_);
-    }
 
     // TODO: Add fuzz tests to check the ER calculation.
     function _calculateRedemption(uint256 sharesToRedeem_) internal view returns (uint256 redeemableShares_, uint256 resultingAssets_) {
@@ -230,22 +221,6 @@ contract MapleWithdrawalManager is IMapleWithdrawalManager, MapleWithdrawalManag
         resultingAssets_  = totalAssetsWithLosses_ * redeemableShares_  / totalSupply_;
     }
 
-    // TODO: Optimize the request deletion.
-    function _decreaseRequest(uint128 requestId_, address owner_, uint256 shares_) internal {
-        // Update the withdrawal request.
-        uint256 remainingShares_ = queue.requests[requestId_].shares -= shares_;
-
-        // Adjust the total amount of shares locked.
-        totalShares -= shares_;
-
-        // Cancel the request if all shares have been redeemed.
-        if (remainingShares_ == 0) {
-            _cancelRequest(owner_, requestId_);
-        } else {
-            emit RequestUpdated(requestId_, remainingShares_);
-        }
-    }
-
     function _min(uint256 a_, uint256 b_) internal pure returns (uint256 min_) {
         min_ = a_ < b_ ? a_ : b_;
     }
@@ -260,24 +235,18 @@ contract MapleWithdrawalManager is IMapleWithdrawalManager, MapleWithdrawalManag
         )
     {
         // Only manual users can redeem.
-        require(isManual[owner_], "WM:PE:NOT_MANUAL");
+        require(isManualWithdrawal[owner_],               "WM:PE:NOT_MANUAL");
+        require(shares_ > 0,                              "WM:PE:NO_SHARES");
+        require(shares_ <= manualSharesAvailable[owner_], "WM:PE:TOO_MANY_SHARES");
 
-        uint128 requestId_ = requestIds[owner_];
+        ( redeemableShares_ , resultingAssets_ ) = _calculateRedemption(shares_);
 
-        // Only users with an existing request can redeem.
-        require(requestId_ != 0, "WM:PE:NO_REQUEST");
+        manualSharesAvailable[owner_] -= redeemableShares_;
 
-        // Only users who have a processed request can redeem.
-        require(requestId_ < queue.nextRequestId, "WM:PE:NOT_PROCESSED");
+        emit ManualSharesDecreased(owner_, redeemableShares_);
 
-        // The original `shares_` parameter is ignored.
-        shares_ = queue.requests[requestId_].shares;
-
-        ( redeemableShares_, resultingAssets_ ) = _calculateRedemption(shares_);
-
-        emit RequestProcessed(requestId_, redeemableShares_, resultingAssets_);
-
-        _decreaseRequest(requestId_, owner_, redeemableShares_);
+        // Unlock the reserved shares.
+        totalShares -= redeemableShares_;
 
         require(ERC20Helper.transfer(pool, owner_, redeemableShares_), "WM:PE:TRANSFER_FAIL");
     }
@@ -305,15 +274,39 @@ contract MapleWithdrawalManager is IMapleWithdrawalManager, MapleWithdrawalManag
 
         ( processedShares_, resultingAssets_ ) = _calculateRedemption(sharesToProcess_);
 
-        isProcessed_ = processedShares_ == request_.shares;
+        // If there are no remaining shares, request has been fully processed.
+        queue.requests[requestId_].shares -= processedShares_;
 
-        if (!isManual[request_.owner]) {
-            emit RequestProcessed(requestId_, processedShares_, resultingAssets_);
+        isProcessed_ = (request_.shares -= processedShares_) == 0;
 
-            _decreaseRequest(requestId_, request_.owner, processedShares_);
+        emit RequestProcessed(requestId_, request_.owner, processedShares_, resultingAssets_);
+
+        // If the request has been fully processed, remove it from the queue.
+        if (isProcessed_) {
+            _removeRequest(request_.owner, requestId_);
+        } else {
+            // Update the withdrawal request.
+            emit RequestDecreased(requestId_, processedShares_);
+        }
+
+        // If the owner opts for manual redemption, increase the account's available shares.
+        if (isManualWithdrawal[request_.owner]) {
+            manualSharesAvailable[request_.owner] += processedShares_;
+
+            emit ManualSharesIncreased(request_.owner, processedShares_);
+        } else {
+            // Otherwise, just adjust totalShares and perform the redeem.
+            totalShares -= processedShares_;
 
             IPoolLike(pool).redeem(processedShares_, request_.owner, address(this));
         }
+    }
+
+    function _removeRequest(address owner_, uint128 requestId_) internal {
+        delete requestIds[owner_];
+        delete queue.requests[requestId_];
+
+        emit RequestRemoved(requestId_);
     }
 
     /**************************************************************************************************************************************/
@@ -353,21 +346,11 @@ contract MapleWithdrawalManager is IMapleWithdrawalManager, MapleWithdrawalManag
             uint256 resultingAssets_
         )
     {
-        uint128 requestId_ = requestIds[owner_];
+        uint256 sharesAvailable_ = manualSharesAvailable[owner_];
 
-        // Only manual users can call redeem.
-        if (!isManual[owner_]) return ( 0, 0 );
+        if (sharesAvailable_ == 0) return ( 0, 0 );
 
-        // Only users with a pending request can call redeem.
-        if (requestId_ == 0) return ( 0, 0 );
-
-        // Only users who have had their request processed can redeem.
-        if (requestId_ >= queue.nextRequestId) return (0, 0);
-
-        WithdrawalRequest memory request_ = queue.requests[requestId_];
-
-        // The original `shares_` parameter is ignored.
-        shares_ = request_.shares;
+        require(shares_ <= sharesAvailable_, "WM:PR:TOO_MANY_SHARES");
 
         ( redeemableShares_, resultingAssets_ ) = _calculateRedemption(shares_);
     }

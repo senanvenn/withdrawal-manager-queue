@@ -5,8 +5,16 @@ import { MapleWithdrawalManager } from "../../contracts/MapleWithdrawalManager.s
 
 contract MapleWithdrawalManagerHarness is MapleWithdrawalManager {
 
+    function __setManualSharesAvailable(address owner_, uint256 shares_) external {
+        manualSharesAvailable[owner_] = shares_;
+    }
+
     function __setManualWithdrawal(address owner_, bool isManual_) external {
-        isManual[owner_] = isManual_;
+        isManualWithdrawal[owner_] = isManual_;
+    }
+
+    function __setOwnerRequest(address owner_, uint128 requestId_) external {
+        requestIds[owner_] = requestId_;
     }
 
     function __setQueue(uint128 nextRequestId_, uint128 lastRequestId_) external {

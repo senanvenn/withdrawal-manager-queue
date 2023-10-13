@@ -5,7 +5,7 @@ import { TestBase } from "../utils/TestBase.sol";
 
 contract RemoveRequestTests is TestBase {
 
-    event RequestCancelled(uint128 indexed requestId);
+    event RequestRemoved(uint128 indexed requestId);
 
     function setUp() public override {
         super.setUp();
@@ -52,7 +52,7 @@ contract RemoveRequestTests is TestBase {
         assertEq(withdrawalManager.requestIds(owner_), lastRequestId);
 
         vm.expectEmit();
-        emit RequestCancelled(1);
+        emit RequestRemoved(1);
 
         vm.prank(poolDelegate);
         withdrawalManager.removeRequest(lp);
@@ -61,10 +61,12 @@ contract RemoveRequestTests is TestBase {
 
         ( owner_, shares_ ) = withdrawalManager.requests(lastRequestId);
 
-        assertEq(shares_,                              0);
-        assertEq(withdrawalManager.totalShares(),      0);
         assertEq(lastRequestId,                        1);
+        assertEq(shares_,                              0);
+        assertEq(owner_,                               address(0));
         assertEq(withdrawalManager.requestIds(owner_), 0);
+        assertEq(withdrawalManager.requestIds(lp),     0);
+        assertEq(withdrawalManager.totalShares(),      0);
     }
 
 }

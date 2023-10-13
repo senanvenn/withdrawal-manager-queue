@@ -3,11 +3,10 @@ pragma solidity ^0.8.7;
 
 import { TestBase } from "../utils/TestBase.sol";
 
+// TODO: Add ManualSharesDecreased event to tests
 contract ProcessExitTests is TestBase {
 
-    event RequestCancelled(uint128 indexed requestId);
-    event RequestProcessed(uint128 indexed requestId, uint256 shares, uint256 assets);
-    event RequestUpdated(uint128 indexed requestId, uint256 shares);
+    event RequestRemoved(uint128 indexed requestId);
 
     uint256 assetsDeposited = 100e18;
     uint256 sharesToRedeem  = 250e18;
@@ -32,21 +31,29 @@ contract ProcessExitTests is TestBase {
         withdrawalManager.processExit(sharesToRedeem, lp);
     }
 
-    function test_processExit_noRequest() external {
+    function test_processExit_noShares() external {
         withdrawalManager.__setManualWithdrawal(lp, true);
 
         vm.prank(pm);
-        vm.expectRevert("WM:PE:NO_REQUEST");
+        vm.expectRevert("WM:PE:NO_SHARES");
+        withdrawalManager.processExit(0, lp);
+    }
+
+    function test_processExit_tooManyShares() external {
+        withdrawalManager.__setManualWithdrawal(lp, true);
+
+        vm.prank(pm);
+        vm.expectRevert("WM:PE:TOO_MANY_SHARES");
         withdrawalManager.processExit(sharesToRedeem, lp);
     }
 
-    function test_processExit_notProcessed() external {
+    function test_processExit_tooManyShares_notProcessed() external {
         withdrawalManager.__setManualWithdrawal(lp, true);
         withdrawalManager.__setRequest(1, lp, sharesToRedeem);
         withdrawalManager.__setQueue(1, 1);
 
         vm.prank(pm);
-        vm.expectRevert("WM:PE:NOT_PROCESSED");
+        vm.expectRevert("WM:PE:TOO_MANY_SHARES");
         withdrawalManager.processExit(sharesToRedeem, lp);
     }
 
@@ -54,7 +61,7 @@ contract ProcessExitTests is TestBase {
         withdrawalManager.__setManualWithdrawal(lp, true);
         withdrawalManager.__setRequest(1, lp, sharesToRedeem);
         withdrawalManager.__setTotalShares(sharesToRedeem);
-        withdrawalManager.__setQueue(2, 1);
+        withdrawalManager.__setManualSharesAvailable(lp, sharesToRedeem);
 
         pool.burn(wm, 1);
 
@@ -67,16 +74,11 @@ contract ProcessExitTests is TestBase {
         withdrawalManager.__setManualWithdrawal(lp, true);
         withdrawalManager.__setRequest(1, lp, sharesToRedeem);
         withdrawalManager.__setTotalShares(sharesToRedeem);
-        withdrawalManager.__setQueue(2, 1);
+        withdrawalManager.__setOwnerRequest(lp, 0);
+        withdrawalManager.__setManualSharesAvailable(lp, sharesToRedeem);
 
         assertEq(pool.balanceOf(lp), 0);
         assertEq(pool.balanceOf(wm), sharesToRedeem);
-
-        vm.expectEmit();
-        emit RequestProcessed(1, sharesToRedeem, assetsDeposited);
-
-        vm.expectEmit();
-        emit RequestCancelled(1);
 
         vm.prank(pm);
         withdrawalManager.processExit(sharesToRedeem, lp);
@@ -85,17 +87,17 @@ contract ProcessExitTests is TestBase {
         assertEq(pool.balanceOf(wm), 0);
 
         assertEq(withdrawalManager.totalShares(), 0);
-
         assertEq(withdrawalManager.requestIds(lp), 0);
+        assertEq(withdrawalManager.manualSharesAvailable(lp), 0);
 
-        assertRequest({ requestId: 1, owner: address(0), shares: 0 });
+        assertRequest({ requestId: 1, owner: lp, shares: sharesToRedeem });
     }
 
     function test_processExit_manual_partial() external {
         withdrawalManager.__setManualWithdrawal(lp, true);
-        withdrawalManager.__setRequest(1, lp, sharesToRedeem);
+        withdrawalManager.__setRequest(1, lp, sharesToRedeem / 2);
         withdrawalManager.__setTotalShares(sharesToRedeem);
-        withdrawalManager.__setQueue(2, 1);
+        withdrawalManager.__setManualSharesAvailable(lp, sharesToRedeem / 2);
 
         // Only half of the liquidity is available.
         asset.burn(address(pool), assetsDeposited / 2);
@@ -103,14 +105,8 @@ contract ProcessExitTests is TestBase {
         assertEq(pool.balanceOf(lp), 0);
         assertEq(pool.balanceOf(wm), sharesToRedeem);
 
-        vm.expectEmit();
-        emit RequestProcessed(1, sharesToRedeem / 2, assetsDeposited / 2);
-
-        vm.expectEmit();
-        emit RequestUpdated(1, sharesToRedeem / 2);
-
         vm.prank(pm);
-        withdrawalManager.processExit(sharesToRedeem, lp);
+        withdrawalManager.processExit(sharesToRedeem / 2, lp);
 
         assertEq(pool.balanceOf(lp), sharesToRedeem / 2);
         assertEq(pool.balanceOf(wm), sharesToRedeem / 2);

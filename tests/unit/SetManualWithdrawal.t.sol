@@ -21,7 +21,7 @@ contract SetManualWithdrawalTests is TestBase {
     }
 
     function test_setManualWithdrawal_success() external {
-        assertEq(withdrawalManager.isManual(lp), false);
+        assertEq(withdrawalManager.isManualWithdrawal(lp), false);
 
         vm.expectEmit();
         emit ManualWithdrawalSet(lp, true);
@@ -29,7 +29,7 @@ contract SetManualWithdrawalTests is TestBase {
         vm.prank(poolDelegate);
         withdrawalManager.setManualWithdrawal(lp, true);
 
-        assertEq(withdrawalManager.isManual(lp), true);
+        assertEq(withdrawalManager.isManualWithdrawal(lp), true);
     }
 
 }

@@ -31,8 +31,10 @@ contract MapleWithdrawalManagerStorage is IMapleWithdrawalManagerStorage {
 
     Queue public override queue;
 
-    mapping(address => bool) public override isManual;  // Defines which users use automated withdrawals (false by default).
+    mapping(address => bool) public override isManualWithdrawal;  // Defines which users use automated withdrawals (false by default).
 
     mapping(address => uint128) public override requestIds;  // Maps users to their withdrawal requests identifiers.
+
+    mapping(address => uint256) public override manualSharesAvailable;  // Shares available to withdraw for a given manual owner.
 
 }

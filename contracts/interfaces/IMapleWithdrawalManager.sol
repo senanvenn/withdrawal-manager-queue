@@ -8,10 +8,25 @@ interface IMapleWithdrawalManager {
     /**************************************************************************************************************************************/
 
     /**
-     *  @dev   Emitted when a withdrawal request is cancelled.
-     *  @param requestId Identifier of the withdrawal request.
+     *  @dev   Emitted when a manual redemption takes place.
+     *  @param owner           Address of the account.
+     *  @param sharesDecreased Amount of shares redeemed.
      */
-    event RequestCancelled(uint128 indexed requestId);
+    event ManualSharesDecreased(address indexed owner, uint256 sharesDecreased);
+
+    /**
+     *  @dev   Emitted when a manual redemption is processed.
+     *  @param owner       Address of the account.
+     *  @param sharesAdded Amount of shares added to the redeemable amount.
+     */
+    event ManualSharesIncreased(address indexed owner, uint256 sharesAdded);
+
+    /**
+     *  @dev   Emitted when the withdrawal type of an account is updated.
+     *  @param owner     Address of the account.
+     *  @param isManual `true` if the withdrawal is manual, `false` if it is automatic.
+     */
+    event ManualWithdrawalSet(address indexed owner, bool isManual);
 
     /**
      *  @dev   Emitted when a withdrawal request is created.
@@ -22,26 +37,26 @@ interface IMapleWithdrawalManager {
     event RequestCreated(uint128 indexed requestId, address owner, uint256 shares);
 
     /**
+     *  @dev   Emitted when a withdrawal request is updated.
+     *  @param requestId Identifier of the withdrawal request.
+     *  @param shares    Amount of shares reduced during a redemption request.
+     */
+    event RequestDecreased(uint128 indexed requestId, uint256 shares);
+
+    /**
      *  @dev   Emitted when a withdrawal request is processed.
      *  @param requestId Identifier of the withdrawal request.
+     *  @param owner     The owner of the shares.
      *  @param shares    Amount of redeemable shares.
      *  @param assets    Amount of withdrawable assets.
      */
-    event RequestProcessed(uint128 indexed requestId, uint256 shares, uint256 assets);
+    event RequestProcessed(uint128 indexed requestId, address indexed owner, uint256 shares, uint256 assets);
 
     /**
-     *  @dev   Emitted when a withdrawal request is updated.
+     *  @dev   Emitted when a withdrawal request is removed.
      *  @param requestId Identifier of the withdrawal request.
-     *  @param shares    Amount of remaining shares pending redemption.
      */
-    event RequestUpdated(uint128 indexed requestId, uint256 shares);
-
-    /**
-     *  @dev   Emitted when the withdrawal type of an account is updated.
-     *  @param account  Address of the account.
-     *  @param isManual `true` if the withdrawal is manual, `false` if it is automatic.
-     */
-    event ManualWithdrawalSet(address indexed account, bool isManual);
+    event RequestRemoved(uint128 indexed requestId);
 
     /**************************************************************************************************************************************/
     /*** State-Changing Functions                                                                                                       ***/
