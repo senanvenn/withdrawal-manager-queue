@@ -1,6 +1,6 @@
 # Withdrawal Manager Queue
 
-![CI](https://github.com/maple-labs/withdrawal-manager-queue-private/actions/workflows/ci.yaml/badge.svg)
+![CI](https://github.com/maple-labs/withdrawal-manager-queue-private/actions/workflows/ci.yml/badge.svg)
 [![GitBook - Documentation](https://img.shields.io/badge/GitBook-Documentation-orange?logo=gitbook&logoColor=white)](https://maplefinance.gitbook.io/maple/maple-for-developers/protocol-overview)
 [![Foundry][foundry-badge]][foundry]
 [![License: BUSL 1.1](https://img.shields.io/badge/License-BUSL%201.1-blue.svg)](https://github.com/maple-labs/withdrawal-manager-queue-private/blob/main/LICENSE)
