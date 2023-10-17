@@ -234,8 +234,6 @@ contract MapleWithdrawalManager is IMapleWithdrawalManager, MapleWithdrawalManag
             uint256 resultingAssets_
         )
     {
-        // Only manual users can redeem.
-        require(isManualWithdrawal[owner_],               "WM:PE:NOT_MANUAL");
         require(shares_ > 0,                              "WM:PE:NO_SHARES");
         require(shares_ <= manualSharesAvailable[owner_], "WM:PE:TOO_MANY_SHARES");
 

@@ -25,12 +25,6 @@ contract ProcessExitTests is TestBase {
         withdrawalManager.processExit(sharesToRedeem, lp);
     }
 
-    function test_processExit_notManual() external {
-        vm.prank(pm);
-        vm.expectRevert("WM:PE:NOT_MANUAL");
-        withdrawalManager.processExit(sharesToRedeem, lp);
-    }
-
     function test_processExit_noShares() external {
         withdrawalManager.__setManualWithdrawal(lp, true);
 
