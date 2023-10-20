@@ -331,6 +331,23 @@ contract MapleWithdrawalManager is IMapleWithdrawalManager, MapleWithdrawalManag
         implementation_ = _implementation();
     }
 
+    function isInExitWindow(address owner_) external pure override returns (bool isInExitWindow_) {
+        owner_;  // Silence warning
+
+        isInExitWindow_ = true;
+    }
+
+    function lockedLiquidity() external pure override returns (uint256 lockedLiquidity_) {
+        // At the Pool Delegate's discretion whether to service withdrawals or fund loans.
+        // NOTE: Always zero.
+        return lockedLiquidity_;
+    }
+
+    function lockedShares(address owner_) external view override returns (uint256 lockedShares_) {
+        // Used for maxRedeem and requires a redemption request to be processed.
+        lockedShares_ = manualSharesAvailable[owner_];
+    }
+
     function poolDelegate() public view override returns (address poolDelegate_) {
         poolDelegate_ = IPoolManagerLike(poolManager).poolDelegate();
     }
@@ -351,6 +368,13 @@ contract MapleWithdrawalManager is IMapleWithdrawalManager, MapleWithdrawalManag
         require(shares_ <= sharesAvailable_, "WM:PR:TOO_MANY_SHARES");
 
         ( redeemableShares_, resultingAssets_ ) = _calculateRedemption(shares_);
+    }
+
+    function previewWithdraw(address owner_, uint256 assets_)
+        external pure override returns (uint256 redeemableAssets_, uint256 resultingShares_)
+    {
+        owner_; assets_; redeemableAssets_; resultingShares_;  // Silence compiler warnings
+        return ( redeemableAssets_, resultingShares_ );  // NOTE: Withdrawal not implemented use redeem instead
     }
 
     function requests(uint128 requestId_) external view override returns (address owner_, uint256 shares_) {

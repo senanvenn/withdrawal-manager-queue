@@ -145,6 +145,28 @@ interface IMapleWithdrawalManager {
     function implementation() external view returns (address implementation);
 
     /**
+     *  @dev    Returns if a user is able to withdraw. Required for compatibility with pool managers.
+     *          NOTE: Always returns true to fulfil interface requirements.
+     *  @param  owner_          The account to check if it's in withdraw window.
+     *  @return isInExitWindow_ True if the account is in the withdraw window.
+     */
+    function isInExitWindow(address owner_) external view returns (bool isInExitWindow_);
+
+    /**
+     *  @dev    Gets the total amount of funds that need to be locked to fulfill exits.
+     *          NOTE: Always zero for this implementation.
+     *  @return lockedLiquidity_ The amount of locked liquidity.
+     */
+    function lockedLiquidity() external view returns (uint256 lockedLiquidity_);
+
+    /**
+     *  @dev    Gets the amount of locked shares for an account.
+     *  @param  owner_        The address to check the exit for.
+     *  @return lockedShares_ The amount of manual shares available.
+     */
+    function lockedShares(address owner_) external view returns (uint256 lockedShares_);
+
+    /**
      *  @dev   Returns the address of the pool delegate.
      *  @param poolDelegate Address of the pool delegate.
      */
@@ -159,6 +181,16 @@ interface IMapleWithdrawalManager {
      *  @return resultingAssets  Amount of assets that can be withdrawn.
      */
     function previewRedeem(address owner, uint256 shares) external view returns (uint256 redeemableShares, uint256 resultingAssets);
+
+    /**
+     *  @dev    Gets the amount of shares that can be withdrawn.
+     *          NOTE: Values just passed through as withdraw is not implemented.
+     *  @param  owner_            The address to check the withdrawal for.
+     *  @param  assets_           The amount of requested shares to withdraw.
+     *  @return redeemableAssets_ The amount of assets that can be withdrawn.
+     *  @return resultingShares_  The amount of shares that will be burned.
+     */
+    function previewWithdraw(address owner_, uint256 assets_) external view returns (uint256 redeemableAssets_, uint256 resultingShares_);
 
     /**
      *  @dev    Returns the owner and amount of shares associated with a withdrawal request.
