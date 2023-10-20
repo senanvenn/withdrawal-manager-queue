@@ -40,14 +40,22 @@ contract MapleWithdrawalManager is IMapleWithdrawalManager, MapleWithdrawalManag
         _;
     }
 
-    modifier onlyPoolManager {
-        require(msg.sender == poolManager, "WM:NOT_PM");
+    modifier onlyProtocolAdmins {
+        address globals_ = globals();
+
+        require(
+            msg.sender == IPoolManagerLike(poolManager).poolDelegate() ||
+            msg.sender == IGlobalsLike(globals_).governor() ||
+            msg.sender == IGlobalsLike(globals_).operationalAdmin(),
+            "WM:NOT_PD_OR_GOV_OR_OA"
+        );
 
         _;
     }
 
-    modifier onlyPoolDelegate {
-        require(msg.sender == poolDelegate(), "WM:NOT_PD");
+    modifier onlyPoolManager {
+        require(msg.sender == poolManager, "WM:NOT_PM");
+
         _;
     }
 
@@ -177,7 +185,7 @@ contract MapleWithdrawalManager is IMapleWithdrawalManager, MapleWithdrawalManag
         sharesReturned_ = shares_;
     }
 
-    function removeRequest(address owner_) external override onlyPoolDelegate {
+    function removeRequest(address owner_) external override onlyProtocolAdmins {
         require(requestIds[owner_] > 0, "WM:RR:NOT_IN_QUEUE");
 
         uint128 requestId_ = requestIds[owner_];
@@ -191,7 +199,7 @@ contract MapleWithdrawalManager is IMapleWithdrawalManager, MapleWithdrawalManag
         require(ERC20Helper.transfer(pool, owner_, shares_), "WM:RR:TRANSFER_FAIL");
     }
 
-    function setManualWithdrawal(address owner_, bool isManual_) external override onlyPoolDelegate {
+    function setManualWithdrawal(address owner_, bool isManual_) external override onlyProtocolAdmins {
         uint128 requestId_ = requestIds[owner_];
 
         // TODO: Check if this is required.

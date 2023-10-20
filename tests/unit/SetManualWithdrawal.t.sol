@@ -7,8 +7,8 @@ contract SetManualWithdrawalTests is TestBase {
 
     event ManualWithdrawalSet(address indexed account, bool isManual);
 
-    function test_setManualWithdrawal_notPoolDelegate() external {
-        vm.expectRevert("WM:NOT_PD");
+    function test_setManualWithdrawal_notProtocolAdmin() external {
+        vm.expectRevert("WM:NOT_PD_OR_GOV_OR_OA");
         withdrawalManager.setManualWithdrawal(lp, true);
     }
 
