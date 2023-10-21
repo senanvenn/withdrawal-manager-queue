@@ -163,7 +163,7 @@ contract MapleWithdrawalManager is IMapleWithdrawalManager, MapleWithdrawalManag
             : _processManualExit(shares_, owner_);
     }
 
-    function processRedemptions(uint256 sharesToProcess_) external override whenProtocolNotPaused onlyRedeemer {
+    function processRedemptions(uint256 sharesToProcess_) external override whenProtocolNotPaused nonReentrant onlyRedeemer {
         require(sharesToProcess_ > 0, "WM:PR:ZERO_SHARES");
 
         ( uint256 redeemableShares_, ) = _calculateRedemption(sharesToProcess_);
