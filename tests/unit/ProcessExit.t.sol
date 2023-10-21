@@ -51,6 +51,19 @@ contract ProcessExitTests is TestBase {
         withdrawalManager.processExit(sharesToRedeem, lp);
     }
 
+    function test_processExit_notEnoughLiquidity() external {
+        withdrawalManager.__setManualWithdrawal(lp, true);
+        withdrawalManager.__setRequest(1, lp, sharesToRedeem);
+        withdrawalManager.__setTotalShares(sharesToRedeem);
+        withdrawalManager.__setManualSharesAvailable(lp, sharesToRedeem);
+
+        asset.burn(address(pool), assetsDeposited);
+
+        vm.prank(pm);
+        vm.expectRevert("WM:PE:NOT_ENOUGH_LIQUIDITY");
+        withdrawalManager.processExit(sharesToRedeem, lp);
+    }
+
     function test_processExit_transferFail() external {
         withdrawalManager.__setManualWithdrawal(lp, true);
         withdrawalManager.__setRequest(1, lp, sharesToRedeem);

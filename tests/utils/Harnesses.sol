@@ -5,6 +5,10 @@ import { MapleWithdrawalManager } from "../../contracts/MapleWithdrawalManager.s
 
 contract MapleWithdrawalManagerHarness is MapleWithdrawalManager {
 
+    function locked() external view returns (uint256) {
+        return _locked;
+    }
+
     function __setManualSharesAvailable(address owner_, uint256 shares_) external {
         manualSharesAvailable[owner_] = shares_;
     }

@@ -42,7 +42,7 @@ contract RemoveSharesTests is TestBase {
         withdrawalManager.addShares(2, lp);
 
         vm.prank(pm);
-        vm.expectRevert("WM:RS:DECREASE_SHARES_ONLY");
+        vm.expectRevert("WM:RS:INSUFFICIENT_SHARES");
         withdrawalManager.removeShares(3, lp);
     }
 

@@ -4,7 +4,8 @@ pragma solidity ^0.8.7;
 import { MapleWithdrawalManager }        from "../../contracts/MapleWithdrawalManager.sol";
 import { MapleWithdrawalManagerFactory } from "../../contracts/proxy/MapleWithdrawalManagerFactory.sol";
 
-import { TestBase } from "../utils/TestBase.sol";
+import { TestBase }                      from "../utils/TestBase.sol";
+import { MapleWithdrawalManagerHarness } from "../utils/Harnesses.sol";
 
 contract CreateInstanceTests is TestBase {
 
@@ -31,7 +32,7 @@ contract CreateInstanceTests is TestBase {
         factory.createInstance(calldata_, "SALT");
 
         globals.__setCanDeploy(true);
-        
+
         factory.createInstance(calldata_, "SALT");
     }
 
@@ -67,6 +68,8 @@ contract CreateInstanceTests is TestBase {
         emit Initialized(address(pool), pm);
 
         MapleWithdrawalManager withdrawalManager_ = MapleWithdrawalManager(factory.createInstance(calldata_, "SALT"));
+
+        assertEq(MapleWithdrawalManagerHarness(address(withdrawalManager_)).locked(), 1);
 
         assertEq(withdrawalManager_.pool(),        address(pool));
         assertEq(withdrawalManager_.poolManager(), pm);

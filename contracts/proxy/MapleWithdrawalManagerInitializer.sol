@@ -26,6 +26,8 @@ contract MapleWithdrawalManagerInitializer is IMapleWithdrawalManagerInitializer
         require(IGlobalsLike(globals_).isInstanceOf("POOL_MANAGER_FACTORY", factory_), "WMI:I:INVALID_PM_FACTORY");
         require(IMapleProxyFactoryLike(factory_).isInstance(poolManager_),             "WMI:I:INVALID_PM");
 
+        _locked = 1;
+
         pool        = pool_;
         poolManager = poolManager_;
 

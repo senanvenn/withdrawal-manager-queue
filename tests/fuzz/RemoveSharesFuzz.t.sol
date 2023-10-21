@@ -43,7 +43,7 @@ contract RemoveSharesFuzzTests is TestBase {
 
             if (amount1_[i] > amount0_[i]) {
                 vm.prank(pm);
-                vm.expectRevert("WM:RS:DECREASE_SHARES_ONLY");
+                vm.expectRevert("WM:RS:INSUFFICIENT_SHARES");
                 withdrawalManager.removeShares(amount1_[i], account_[i]);
                 break;
             }

@@ -24,6 +24,8 @@ contract MapleWithdrawalManagerStorage is IMapleWithdrawalManagerStorage {
     /*** State Variables                                                                                                                ***/
     /**************************************************************************************************************************************/
 
+    uint256 internal _locked;  // Used when checking for reentrancy.
+    
     address public override pool;
     address public override poolManager;
 

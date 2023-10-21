@@ -4,6 +4,7 @@ pragma solidity ^0.8.7;
 import { TestBase } from "../utils/TestBase.sol";
 
 // TODO: Add ManualSharesIncreased event to tests
+// TODO: Add test case for reentrancy check
 contract ProcessRedemptionsTests is TestBase {
 
     event RequestDecreased(uint128 indexed requestId, uint256 shares);

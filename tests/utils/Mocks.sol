@@ -3,6 +3,8 @@ pragma solidity ^0.8.7;
 
 import { MockERC20 } from "../../modules/erc20/contracts/test/mocks/MockERC20.sol";
 
+import { MapleWithdrawalManagerStorage } from "../../contracts/proxy/MapleWithdrawalManagerStorage.sol";
+
 contract MockFactory {
 
     bool _isInstance;
@@ -142,9 +144,7 @@ contract MockPoolManager {
 
 }
 
-contract MockWithdrawalManagerMigrator {
-
-    address public pool;
+contract MockWithdrawalManagerMigrator is MapleWithdrawalManagerStorage {
 
     fallback() external {
         pool = abi.decode(msg.data, (address));
