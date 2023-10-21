@@ -16,6 +16,13 @@ contract RemoveRequestTests is TestBase {
         pool.approve(address(withdrawalManager), 2);
     }
 
+    function test_removeRequest_protocolPaused() external {
+        globals.__setFunctionPaused(true);
+
+        vm.expectRevert("WM:PAUSED");
+        withdrawalManager.removeRequest(lp);
+    }
+
     function test_removeRequest_notProtocolAdmin() external {
         vm.expectRevert("WM:NOT_PD_OR_GOV_OR_OA");
         withdrawalManager.removeRequest(lp);

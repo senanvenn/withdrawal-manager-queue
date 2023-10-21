@@ -23,6 +23,13 @@ contract UpgradeTests is TestBase {
         vm.stopPrank();
     }
 
+    function test_upgrade_protocolPaused() external {
+        globals.__setFunctionPaused(true);
+
+        vm.expectRevert("WM:PAUSED");
+        withdrawalManager.upgrade(2, abi.encode(address(0)));
+    }
+
     function test_upgrade_notSecurityAdmin() external {
         vm.expectRevert("WM:U:NOT_AUTHORIZED");
         withdrawalManager.upgrade(2, "");
@@ -59,7 +66,7 @@ contract UpgradeTests is TestBase {
         assertEq(withdrawalManager.implementation(), implementation);
 
         MockGlobals(globals).__setIsValidScheduledCall(true);
-        
+
         vm.prank(poolDelegate);
         withdrawalManager.upgrade(2, abi.encode(address(0)));
 

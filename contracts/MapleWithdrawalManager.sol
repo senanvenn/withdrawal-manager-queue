@@ -16,8 +16,6 @@ import {
 
 import { MapleWithdrawalManagerStorage } from "./proxy/MapleWithdrawalManagerStorage.sol";
 
-// TODO: Optimize struct if possible.
-// TODO: Optimize storage loads of the struct.
 // TODO: Add reentrancy checks.
 
 contract MapleWithdrawalManager is IMapleWithdrawalManager, MapleWithdrawalManagerStorage , MapleProxiedInternals {
@@ -59,21 +57,26 @@ contract MapleWithdrawalManager is IMapleWithdrawalManager, MapleWithdrawalManag
         _;
     }
 
+    modifier whenProtocolNotPaused() {
+        require(!IGlobalsLike(globals()).isFunctionPaused(msg.sig), "WM:PAUSED");
+        _;
+    }
+
     /**************************************************************************************************************************************/
     /*** Proxy Functions                                                                                                                ***/
     /**************************************************************************************************************************************/
 
-    function migrate(address migrator_, bytes calldata arguments_) external {
+    function migrate(address migrator_, bytes calldata arguments_) external override whenProtocolNotPaused {
         require(msg.sender == _factory(),        "WM:M:NOT_FACTORY");
         require(_migrate(migrator_, arguments_), "WM:M:FAILED");
     }
 
-    function setImplementation(address implementation_) external {
+    function setImplementation(address implementation_) external override whenProtocolNotPaused {
         require(msg.sender == _factory(), "WM:SI:NOT_FACTORY");
         _setImplementation(implementation_);
     }
 
-    function upgrade(uint256 version_, bytes calldata arguments_) external {
+    function upgrade(uint256 version_, bytes calldata arguments_) external override whenProtocolNotPaused {
         address poolDelegate_ = poolDelegate();
 
         require(msg.sender == poolDelegate_ || msg.sender == securityAdmin(), "WM:U:NOT_AUTHORIZED");
@@ -125,7 +128,7 @@ contract MapleWithdrawalManager is IMapleWithdrawalManager, MapleWithdrawalManag
             : _processManualExit(shares_, owner_);
     }
 
-    function processRedemptions(uint256 sharesToProcess_) external override onlyRedeemer {
+    function processRedemptions(uint256 sharesToProcess_) external override whenProtocolNotPaused onlyRedeemer {
         require(sharesToProcess_ > 0, "WM:PR:ZERO_SHARES");
 
         ( uint256 redeemableShares_, ) = _calculateRedemption(sharesToProcess_);
@@ -185,7 +188,7 @@ contract MapleWithdrawalManager is IMapleWithdrawalManager, MapleWithdrawalManag
         sharesReturned_ = shares_;
     }
 
-    function removeRequest(address owner_) external override onlyProtocolAdmins {
+    function removeRequest(address owner_) external override whenProtocolNotPaused onlyProtocolAdmins {
         require(requestIds[owner_] > 0, "WM:RR:NOT_IN_QUEUE");
 
         uint128 requestId_ = requestIds[owner_];
@@ -199,10 +202,9 @@ contract MapleWithdrawalManager is IMapleWithdrawalManager, MapleWithdrawalManag
         require(ERC20Helper.transfer(pool, owner_, shares_), "WM:RR:TRANSFER_FAIL");
     }
 
-    function setManualWithdrawal(address owner_, bool isManual_) external override onlyProtocolAdmins {
+    function setManualWithdrawal(address owner_, bool isManual_) external override whenProtocolNotPaused onlyProtocolAdmins {
         uint128 requestId_ = requestIds[owner_];
 
-        // TODO: Check if this is required.
         require(requestId_ == 0, "WM:SMW:IN_QUEUE");
 
         isManualWithdrawal[owner_] = isManual_;
@@ -214,7 +216,6 @@ contract MapleWithdrawalManager is IMapleWithdrawalManager, MapleWithdrawalManag
     /*** Internal Functions                                                                                                             ***/
     /**************************************************************************************************************************************/
 
-    // TODO: Add fuzz tests to check the ER calculation.
     function _calculateRedemption(uint256 sharesToRedeem_) internal view returns (uint256 redeemableShares_, uint256 resultingAssets_) {
         IPoolManagerLike poolManager_ = IPoolManagerLike(poolManager);
 
@@ -257,7 +258,6 @@ contract MapleWithdrawalManager is IMapleWithdrawalManager, MapleWithdrawalManag
         require(ERC20Helper.transfer(pool, owner_, redeemableShares_), "WM:PE:TRANSFER_FAIL");
     }
 
-    // TODO: Optimizations on automatic withdrawals (batch `redeem()` call if possible).
     function _processRequest(
         uint128 requestId_,
         uint256 maximumSharesToProcess_

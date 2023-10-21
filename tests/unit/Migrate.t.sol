@@ -14,6 +14,13 @@ contract MigrateTests is TestBase {
         migrator = address(new MockWithdrawalManagerMigrator());
     }
 
+    function test_migrate_protocolPaused() external {
+        globals.__setFunctionPaused(true);
+
+        vm.expectRevert("WM:PAUSED");
+        withdrawalManager.migrate(migrator, "");
+    }
+
     function test_migrate_notFactory() external {
         vm.expectRevert("WM:M:NOT_FACTORY");
         withdrawalManager.migrate(migrator, "");

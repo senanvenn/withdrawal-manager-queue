@@ -24,6 +24,7 @@ contract MockGlobals {
     address public securityAdmin;
 
     bool internal _canDeploy;
+    bool internal _isFunctionPaused;
     bool internal _isInstance;
     bool internal _isValidScheduledCall;
 
@@ -35,6 +36,10 @@ contract MockGlobals {
 
     function canDeploy(address) external view returns (bool) {
         return _canDeploy;
+    }
+
+    function isFunctionPaused(bytes4) external view returns (bool isFunctionPaused_) {
+        isFunctionPaused_ = _isFunctionPaused;
     }
 
     function isInstanceOf(bytes32, address) external view returns (bool isInstance_) {
@@ -49,6 +54,10 @@ contract MockGlobals {
 
     function __setCanDeploy(bool canDeploy_) external {
         _canDeploy = canDeploy_;
+    }
+
+    function __setFunctionPaused(bool paused_) external {
+        _isFunctionPaused = paused_;
     }
 
     function __setIsInstanceOf(bool isInstance_) external {

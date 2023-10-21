@@ -23,6 +23,13 @@ contract ProcessRedemptionsTests is TestBase {
         withdrawalManager.__setTotalShares(sharesLocked);
     }
 
+    function test_processRedemptions_protocolPaused() external {
+        globals.__setFunctionPaused(true);
+
+        vm.expectRevert("WM:PAUSED");
+        withdrawalManager.processRedemptions(sharesLocked);
+    }
+
     function test_processRedemptions_notRedeemer() external {
         globals.__setIsInstanceOf(false);
 

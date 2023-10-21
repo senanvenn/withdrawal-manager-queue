@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.7;
 
-interface IMapleWithdrawalManager {
+import { IMapleProxied } from "../../modules/maple-proxy-factory/contracts/interfaces/IMapleProxied.sol";
+
+interface IMapleWithdrawalManager is IMapleProxied {
 
     /**************************************************************************************************************************************/
     /*** Events                                                                                                                         ***/
@@ -121,12 +123,6 @@ interface IMapleWithdrawalManager {
     function asset() external view returns (address asset);
 
     /**
-     *  @dev   Return the address of the factory contract.
-     *  @param factory Address of the factory contract.
-     */
-    function factory() external view returns (address factory);
-
-    /**
      *  @dev   Returns the address of the globals contract.
      *  @param globals Address of the globals contract.
      */
@@ -137,12 +133,6 @@ interface IMapleWithdrawalManager {
      *  @param governor Address of the governor contract.
      */
     function governor() external view returns (address governor);
-
-    /**
-     *  @dev   Returns the address of the implementation contract.
-     *  @param implementation Address of the implementation contract.
-     */
-    function implementation() external view returns (address implementation);
 
     /**
      *  @dev    Returns if a user is able to withdraw. Required for compatibility with pool managers.
