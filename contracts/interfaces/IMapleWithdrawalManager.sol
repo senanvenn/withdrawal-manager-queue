@@ -3,7 +3,9 @@ pragma solidity ^0.8.7;
 
 import { IMapleProxied } from "../../modules/maple-proxy-factory/contracts/interfaces/IMapleProxied.sol";
 
-interface IMapleWithdrawalManager is IMapleProxied {
+import { IMapleWithdrawalManagerStorage } from "./IMapleWithdrawalManagerStorage.sol";
+
+interface IMapleWithdrawalManager is IMapleWithdrawalManagerStorage, IMapleProxied {
 
     /**************************************************************************************************************************************/
     /*** Events                                                                                                                         ***/
