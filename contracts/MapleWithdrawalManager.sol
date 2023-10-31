@@ -73,7 +73,7 @@ contract MapleWithdrawalManager is IMapleWithdrawalManager, MapleWithdrawalManag
         _;
     }
 
-    modifier onlyProtocolAdmins {
+    modifier onlyPoolDelegateOrProtocolAdmins {
         address globals_ = globals();
 
         require(
@@ -172,7 +172,7 @@ contract MapleWithdrawalManager is IMapleWithdrawalManager, MapleWithdrawalManag
         require(sharesToProcess_ <= totalShares, "WM:PR:LOW_SHARES");
 
         // Revert if there are insufficient assets to redeem all shares.
-        require(sharesToProcess_ == redeemableShares_, "WM:PR:LOW_LIQUIDITY");
+        require(sharesToProcess_ <= redeemableShares_, "WM:PR:LOW_LIQUIDITY");
 
         uint128 nextRequestId_ = queue.nextRequestId;
         uint128 lastRequestId_ = queue.lastRequestId;
@@ -196,10 +196,10 @@ contract MapleWithdrawalManager is IMapleWithdrawalManager, MapleWithdrawalManag
     }
 
     function removeShares(uint256 shares_, address owner_) external override onlyPoolManager returns (uint256 sharesReturned_) {
-        require(shares_ > 0,            "WM:RS:ZERO_SHARES");
-        require(requestIds[owner_] > 0, "WM:RS:NOT_IN_QUEUE");
-
         uint128 requestId_ = requestIds[owner_];
+
+        require(shares_ > 0,    "WM:RS:ZERO_SHARES");
+        require(requestId_ > 0, "WM:RS:NOT_IN_QUEUE");
 
         uint256 currentShares_ = queue.requests[requestId_].shares;
 
@@ -223,10 +223,10 @@ contract MapleWithdrawalManager is IMapleWithdrawalManager, MapleWithdrawalManag
         sharesReturned_ = shares_;
     }
 
-    function removeRequest(address owner_) external override whenProtocolNotPaused onlyProtocolAdmins {
-        require(requestIds[owner_] > 0, "WM:RR:NOT_IN_QUEUE");
-
+    function removeRequest(address owner_) external override whenProtocolNotPaused onlyPoolDelegateOrProtocolAdmins {
         uint128 requestId_ = requestIds[owner_];
+
+        require(requestId_ > 0, "WM:RR:NOT_IN_QUEUE");
 
         uint256 shares_ = queue.requests[requestId_].shares;
 
@@ -237,7 +237,7 @@ contract MapleWithdrawalManager is IMapleWithdrawalManager, MapleWithdrawalManag
         require(ERC20Helper.transfer(pool, owner_, shares_), "WM:RR:TRANSFER_FAIL");
     }
 
-    function setManualWithdrawal(address owner_, bool isManual_) external override whenProtocolNotPaused onlyProtocolAdmins {
+    function setManualWithdrawal(address owner_, bool isManual_) external override whenProtocolNotPaused onlyPoolDelegateOrProtocolAdmins {
         uint128 requestId_ = requestIds[owner_];
 
         require(requestId_ == 0, "WM:SMW:IN_QUEUE");
