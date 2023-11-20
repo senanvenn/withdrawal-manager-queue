@@ -76,7 +76,6 @@ interface IMapleWithdrawalManager is IMapleWithdrawalManagerStorage, IMapleProxi
     /**
      *  @dev    Processes a withdrawal request.
      *          Uses the current exchange rate to calculate the amount of assets withdrawn.
-     *          NOTE: The `shares` value is ignored.
      *  @param  shares           Amount of shares that should be redeemed.
      *  @param  owner            Address of the account to process.
      *  @return redeemableShares Amount of shares that will be burned.
