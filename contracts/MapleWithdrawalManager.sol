@@ -318,9 +318,7 @@ contract MapleWithdrawalManager is IMapleWithdrawalManager, MapleWithdrawalManag
         ( processedShares_, resultingAssets_ ) = _calculateRedemption(sharesToProcess_);
 
         // If there are no remaining shares, request has been fully processed.
-        queue.requests[requestId_].shares -= processedShares_;
-
-        isProcessed_ = (request_.shares -= processedShares_) == 0;
+        isProcessed_ = (request_.shares - processedShares_) == 0;
 
         emit RequestProcessed(requestId_, request_.owner, processedShares_, resultingAssets_);
 
@@ -329,6 +327,8 @@ contract MapleWithdrawalManager is IMapleWithdrawalManager, MapleWithdrawalManag
             _removeRequest(request_.owner, requestId_);
         } else {
             // Update the withdrawal request.
+            queue.requests[requestId_].shares = request_.shares - processedShares_;
+
             emit RequestDecreased(requestId_, processedShares_);
         }
 
