@@ -163,30 +163,27 @@ contract MapleWithdrawalManager is IMapleWithdrawalManager, MapleWithdrawalManag
             : _processManualExit(shares_, owner_);
     }
 
-    function processRedemptions(uint256 sharesToProcess_) external override whenProtocolNotPaused nonReentrant onlyRedeemer {
-        require(sharesToProcess_ > 0, "WM:PR:ZERO_SHARES");
+    function processRedemptions(uint256 maxSharesToProcess_) external override whenProtocolNotPaused nonReentrant onlyRedeemer {
+        require(maxSharesToProcess_ > 0, "WM:PR:ZERO_SHARES");
 
-        ( uint256 redeemableShares_, ) = _calculateRedemption(sharesToProcess_);
-
-        // Revert if there are insufficient shares to process.
-        require(sharesToProcess_ <= totalShares, "WM:PR:LOW_SHARES");
+        ( uint256 redeemableShares_, ) = _calculateRedemption(maxSharesToProcess_);
 
         // Revert if there are insufficient assets to redeem all shares.
-        require(sharesToProcess_ <= redeemableShares_, "WM:PR:LOW_LIQUIDITY");
+        require(maxSharesToProcess_ <= redeemableShares_, "WM:PR:LOW_LIQUIDITY");
 
         uint128 nextRequestId_ = queue.nextRequestId;
         uint128 lastRequestId_ = queue.lastRequestId;
 
         // Iterate through the loop and process as many requests as possible.
         // Stop iterating when there are no more shares to process or if you have reached the end of the queue.
-        while (sharesToProcess_ > 0 && nextRequestId_ <= lastRequestId_) {
-            ( uint256 sharesProcessed_, bool isProcessed_ ) = _processRequest(nextRequestId_, sharesToProcess_);
+        while (maxSharesToProcess_ > 0 && nextRequestId_ <= lastRequestId_) {
+            ( uint256 sharesProcessed_, bool isProcessed_ ) = _processRequest(nextRequestId_, maxSharesToProcess_);
 
             // If the request has not been processed keep it at the start of the queue.
             // This request will be next in line to be processed on the next call.
             if (!isProcessed_) break;
 
-            sharesToProcess_ -= sharesProcessed_;
+            maxSharesToProcess_ -= sharesProcessed_;
 
             ++nextRequestId_;
         }

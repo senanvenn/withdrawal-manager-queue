@@ -87,9 +87,9 @@ interface IMapleWithdrawalManager is IMapleWithdrawalManagerStorage, IMapleProxi
      *  @dev   Processes pending redemption requests.
      *         Requests are processed in the order they were submitted.
      *         Automatic withdrawal requests will be fulfilled atomically.
-     *  @param sharesToProcess Maximum number of shares that will be processed during the call.
+     *  @param maxSharesToProcess Maximum number of shares that will be processed during the call.
      */
-    function processRedemptions(uint256 sharesToProcess) external;
+    function processRedemptions(uint256 maxSharesToProcess) external;
 
     /**
      *  @dev    Removes shares from the withdrawal manager.

@@ -44,12 +44,6 @@ contract ProcessRedemptionsTests is TestBase {
         withdrawalManager.processRedemptions(0);
     }
 
-    function test_processRedemptions_lowShares() external {
-        vm.prank(poolDelegate);
-        vm.expectRevert("WM:PR:LOW_SHARES");
-        withdrawalManager.processRedemptions(sharesLocked + 1);
-    }
-
     function test_processRedemptions_lowLiquidity() external {
         asset.burn(address(pool), 1);
 
@@ -125,6 +119,26 @@ contract ProcessRedemptionsTests is TestBase {
         assertQueue({ nextRequestId: 1, lastRequestId: 1 });
     }
 
+    function test_processRedemptions_manual_overkill() external {
+        withdrawalManager.__setManualWithdrawal(lp, true);
+        withdrawalManager.__setRequest(1, lp, sharesLocked);
+        withdrawalManager.__setQueue(1, 1);
+
+        // Add extra liquidity.
+        asset.mint(address(pool), assetsDeposited);
+
+        vm.prank(poolDelegate);
+        withdrawalManager.processRedemptions(2 * sharesLocked);
+
+        assertEq(withdrawalManager.totalShares(),             sharesLocked);
+        assertEq(withdrawalManager.requestIds(lp),            0);
+        assertEq(withdrawalManager.manualSharesAvailable(lp), sharesLocked);
+
+        assertRequest({ requestId: 1, owner: address(0), shares: 0 });
+
+        assertQueue({ nextRequestId: 2, lastRequestId: 1 });
+    }
+
     function test_processRedemptions_automatic_complete() external {
         withdrawalManager.__setRequest(1, lp, sharesLocked);
         withdrawalManager.__setQueue(1, 1);
@@ -170,6 +184,31 @@ contract ProcessRedemptionsTests is TestBase {
         assertRequest({ requestId: 1, owner: lp, shares: sharesLocked / 2 });
 
         assertQueue({ nextRequestId: 1, lastRequestId: 1 });
+    }
+
+    function test_processRedemptions_automatic_overkill() external {
+        withdrawalManager.__setRequest(1, lp, sharesLocked);
+        withdrawalManager.__setQueue(1, 1);
+
+        // Add extra liquidity.
+        asset.mint(address(pool), assetsDeposited);
+
+        vm.expectEmit();
+        emit RequestProcessed(1, lp, sharesLocked, assetsDeposited);
+
+        vm.expectEmit();
+        emit RequestRemoved(1);
+
+        vm.prank(poolDelegate);
+        withdrawalManager.processRedemptions(2 * sharesLocked);
+
+        assertEq(withdrawalManager.totalShares(), 0);
+
+        assertEq(withdrawalManager.requestIds(lp), 0);
+
+        assertRequest({ requestId: 1, owner: address(0), shares: 0 });
+
+        assertQueue({ nextRequestId: 2, lastRequestId: 1 });
     }
 
     function test_processRedemptions_multiple() external {
