@@ -8,6 +8,6 @@ interface IMapleWithdrawalManagerInitializer {
      *  @param pool        Address of the pool contract.
      *  @param poolManager Address of the pool manager contract.
      */
-    event Initialized(address pool, address poolManager);
+    event Initialized(address indexed pool, address indexed poolManager);
 
 }

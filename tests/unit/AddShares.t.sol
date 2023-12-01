@@ -5,7 +5,7 @@ import { TestBase } from "../utils/TestBase.sol";
 
 contract AddSharesTests is TestBase {
 
-    event RequestCreated(uint128 indexed requestId, address owner, uint256 shares);
+    event RequestCreated(uint128 indexed requestId, address indexed owner, uint256 shares);
 
     function setUp() public override {
         super.setUp();

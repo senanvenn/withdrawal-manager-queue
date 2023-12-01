@@ -38,7 +38,7 @@ interface IMapleWithdrawalManager is IMapleWithdrawalManagerStorage, IMapleProxi
      *  @param owner     Address of the owner of the shares.
      *  @param shares    Amount of shares requested for redemption.
      */
-    event RequestCreated(uint128 indexed requestId, address owner, uint256 shares);
+    event RequestCreated(uint128 indexed requestId, address indexed owner, uint256 shares);
 
     /**
      *  @dev   Emitted when a withdrawal request is updated.

@@ -9,7 +9,7 @@ import { MapleWithdrawalManagerHarness } from "../utils/Harnesses.sol";
 
 contract CreateInstanceTests is TestBase {
 
-    event Initialized(address pool_, address poolManager_);
+    event Initialized(address indexed pool_, address indexed poolManager_);
 
     function setUp() public override {
         super.setUp();
