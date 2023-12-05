@@ -280,7 +280,7 @@ contract MapleWithdrawalManager is IMapleWithdrawalManager, MapleWithdrawalManag
 
         ( redeemableShares_ , resultingAssets_ ) = _calculateRedemption(shares_);
 
-        require(shares_ <= redeemableShares_, "WM:PE:NOT_ENOUGH_LIQUIDITY");
+        require(shares_ == redeemableShares_, "WM:PE:NOT_ENOUGH_LIQUIDITY");
 
         manualSharesAvailable[owner_] -= redeemableShares_;
 
