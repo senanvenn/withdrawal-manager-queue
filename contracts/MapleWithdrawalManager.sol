@@ -169,7 +169,7 @@ contract MapleWithdrawalManager is IMapleWithdrawalManager, MapleWithdrawalManag
         ( uint256 redeemableShares_, ) = _calculateRedemption(maxSharesToProcess_);
 
         // Revert if there are insufficient assets to redeem all shares.
-        require(maxSharesToProcess_ <= redeemableShares_, "WM:PR:LOW_LIQUIDITY");
+        require(maxSharesToProcess_ == redeemableShares_, "WM:PR:LOW_LIQUIDITY");
 
         uint128 nextRequestId_ = queue.nextRequestId;
         uint128 lastRequestId_ = queue.lastRequestId;
